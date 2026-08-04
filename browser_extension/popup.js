@@ -1,3 +1,23 @@
+const filterToggle = document.getElementById("filterToggle");
+
+// Aktuellen Zustand beim Öffnen des Popups laden
+chrome.storage.local.get(["filterEnabled"], (result) => {
+  filterToggle.checked = result.filterEnabled !== false; // Standard: an
+});
+
+filterToggle.addEventListener("change", () => {
+  chrome.storage.local.set({ filterEnabled: filterToggle.checked });
+  console.log("[PII Filter] Filter", filterToggle.checked ? "aktiviert" : "deaktiviert");
+  isFilterEnabled((enabled) => {
+    console.log("[PII Filter] Enabled-Wert beim Enter-Druck:", enabled);
+    if (!enabled) return;
+    event.preventDefault();
+    event.stopPropagation();
+    processAndResend(inputEl);
+  });
+});
+
+
 document.getElementById("send").addEventListener("click", () => {
   const text = document.getElementById("input").value;
   const statusEl = document.getElementById("status");

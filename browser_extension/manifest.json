@@ -3,12 +3,23 @@
   "name": "Anonymizer LLM",
   "version": "1.0",
   "description": "Test connection between add-on extension and local application",
-  "permissions": ["nativeMessaging"],
+  "permissions": ["nativeMessaging", "storage"],
 
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": [
+        "content-scripts/shared.js",
+        "content-scripts/intercept-send.js",
+        "content-scripts/deanonymize-response.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
 }
