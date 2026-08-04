@@ -1,0 +1,2 @@
+[console_scripts]
+piifilter-host = piifilter.__main__:main

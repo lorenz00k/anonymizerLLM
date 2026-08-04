@@ -1,0 +1,9 @@
+{
+  "name": "com.piifilter.host",
+  "description": "PII Filter lokale App",
+  "path": "REPLACE_WITH_ABSOLUTE_PATH",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://bcoapmgidhammmidggcefggdndmojkok/"
+  ]
+}
