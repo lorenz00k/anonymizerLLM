@@ -19,14 +19,14 @@ const vault = {};
 // Einmalig beim Laden den echten gespeicherten Wert holen
 chrome.storage.local.get(["filterEnabled"], (result) => {
   filterEnabled = result.filterEnabled !== false;
-  console.log("[PII Filter] Initialer Filter-Zustand:", filterEnabled);
+  logDebug("Initialer Filter-Zustand:", filterEnabled);
 });
 
 // Bei Aenderung im Popup sofort synchron nachziehen
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && "filterEnabled" in changes) {
     filterEnabled = changes.filterEnabled.newValue !== false;
-    console.log("[PII Filter] Filter-Zustand geaendert:", filterEnabled);
+    logDebug("Filter-Zustand geaendert:", filterEnabled);
   }
 });
 

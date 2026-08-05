@@ -15,14 +15,14 @@ function getStreamingState(article) {
 }
 
 function deanonymizeArticle(article) {
-  //console.log("[PII Filter DEBUG] deanonymizeArticle gestartet, article:", article);
-  //console.log("[PII Filter DEBUG] ist article noch im DOM?", document.body.contains(article));
+  logTrace("deanonymizeArticle gestartet, article:", article);
+  logTrace("ist article noch im DOM?", document.body.contains(article));
 
   const textEl = article.querySelector("p.font-claude-response-body");
-  //console.log("[PII Filter DEBUG] textEl gefunden:", textEl);
+  logTrace("textEl gefunden:", textEl);
   const target = textEl || article;
   const currentText = target.innerText;
-  console.log("Deanonmisiert input: ", currentText);
+  logDebug("Deanonmisiert input: ", currentText);
 
   let replaced = currentText;
   let foundAny = false;
@@ -34,25 +34,26 @@ function deanonymizeArticle(article) {
   }
 
   if (foundAny) {
-    console.log("[PII Filter] Deanonymisiere Antwort:", replaced);
+    logInfo("Antwort deanonymisiert (", Object.keys(vault).filter(p => currentText.includes(p)).length, "Ersetzung(en) )");
+    logDebug("Deanonymisierte Antwort (Klartext):", replaced);
     target.innerText = replaced;
   }
 }
 
 const responseObserver = new MutationObserver(() => {
   if (!filterEnabled) {
-    console.log("[PII Filter DEBUG] Observer: filter deaktiviert");
+    logTrace("Observer: filter deaktiviert");
     return;
   }
 
   const article = getLastArticle();
   if (!article) {
-    console.log("[PII Filter DEBUG] Observer: kein Artikel gefunden");
+    logTrace("Observer: kein Artikel gefunden");
     return;
   }
 
   const streamingState = getStreamingState(article);
-  console.log("[PII Filter DEBUG] Observer: streamingState =", streamingState);
+  logDebug("Observer: streamingState =", streamingState);
   if (streamingState !== "false") return;
 
   // Sofortiger Check: enthaelt der Text GERADE JETZT einen bekannten
@@ -87,4 +88,4 @@ responseObserver.observe(document.body, {
   attributeFilter: ["data-is-streaming"],
 });
 
-console.log("[PII Filter] deanonymize-response.js geladen");
+logInfo("deanonymize-response.js geladen");

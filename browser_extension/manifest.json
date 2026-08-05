@@ -15,6 +15,7 @@
     {
       "matches": ["https://claude.ai/*"],
       "js": [
+        "logger.js",
         "content-scripts/shared.js",
         "content-scripts/intercept-send.js",
         "content-scripts/deanonymize-response.js"

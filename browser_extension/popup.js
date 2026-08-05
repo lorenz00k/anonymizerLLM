@@ -7,7 +7,7 @@ chrome.storage.local.get(["filterEnabled"], (result) => {
 
 filterToggle.addEventListener("change", () => {
   chrome.storage.local.set({ filterEnabled: filterToggle.checked });
-  console.log("[PII Filter] Filter", filterToggle.checked ? "aktiviert" : "deaktiviert");
+  logInfo("[PII Filter] Filter", filterToggle.checked ? "aktiviert" : "deaktiviert");
 });
 
 

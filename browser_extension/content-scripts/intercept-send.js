@@ -33,11 +33,45 @@ function callHost(text) {
     });
   });
 }
+
+function showInlineError(inputEl, message) {
+  // Kurzzeitige rote Umrandung + Tooltip-artiger Hinweis
+  const original = inputEl.style.outline;
+  inputEl.style.outline = "2px solid #dc2626";
+
+  let hint = document.getElementById("pii-filter-error-hint");
+  if (!hint) {
+    hint = document.createElement("div");
+    hint.id = "pii-filter-error-hint";
+    hint.style.cssText = `
+      position: absolute;
+      background: #dc2626;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      z-index: 9999;
+    `;
+    document.body.appendChild(hint);
+  }
+
+  const rect = inputEl.getBoundingClientRect();
+  hint.style.top = `${rect.top - 30}px`;
+  hint.style.left = `${rect.left}px`;
+  hint.textContent = message;
+  hint.style.display = "block";
+
+  setTimeout(() => {
+    inputEl.style.outline = original;
+    hint.style.display = "none";
+  }, 3000);
+}
+
 async function processAndResend(inputEl) {
   const originalText = inputEl.innerText;
   if (!originalText.trim()) return;
 
-  console.log("[PII Filter] Abgefangener Text:", originalText);
+  logDebug("Abgefangener Text:", originalText);
 
   isProcessing = true;
   try {
@@ -45,7 +79,8 @@ async function processAndResend(inputEl) {
 
     // Vault (aus shared.js) mit den neuen Funden befuellen
     Object.assign(vault, response.replacements);
-    console.log("[PII Filter] Erkannt und ersetzt:", response.replacements);
+    logInfo("Anonymisiert:", Object.keys(response.replacements).length, "Ersetzung(en)");
+    logDebug("Erkannt und ersetzt:", response.replacements);
 
     setText(inputEl, response.result);
 
@@ -55,9 +90,9 @@ async function processAndResend(inputEl) {
       isProcessing = false;
     }, 50);
   } catch (err) {
-    console.error("[PII Filter] Fehler beim Host-Aufruf:", err);
-    showInlineError(inputEl, "Filter nicht erreichbar - Nachricht wurde NICHT gesendet");
-    isProcessing = false;
+      logError("Fehler beim Host-Aufruf:", err);
+      showInlineError(inputEl, "Filter nicht erreichbar - Nachricht wurde NICHT gesendet");
+      isProcessing = false;
   }
 }
 
@@ -96,37 +131,5 @@ document.addEventListener(
   true
 );
 
-console.log("[PII Filter] intercept-send.js geladen");
+logInfo("intercept-send.js geladen");
 
-function showInlineError(inputEl, message) {
-  // Kurzzeitige rote Umrandung + Tooltip-artiger Hinweis
-  const original = inputEl.style.outline;
-  inputEl.style.outline = "2px solid #dc2626";
-
-  let hint = document.getElementById("pii-filter-error-hint");
-  if (!hint) {
-    hint = document.createElement("div");
-    hint.id = "pii-filter-error-hint";
-    hint.style.cssText = `
-      position: absolute;
-      background: #dc2626;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      z-index: 9999;
-    `;
-    document.body.appendChild(hint);
-  }
-
-  const rect = inputEl.getBoundingClientRect();
-  hint.style.top = `${rect.top - 30}px`;
-  hint.style.left = `${rect.left}px`;
-  hint.textContent = message;
-  hint.style.display = "block";
-
-  setTimeout(() => {
-    inputEl.style.outline = original;
-    hint.style.display = "none";
-  }, 3000);
-}

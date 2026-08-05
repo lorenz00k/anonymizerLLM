@@ -1,3 +1,5 @@
+importScripts("logger.js");
+
 // Muss exakt mit dem "name" im native-host manifest json übereinstimmen
 const NATIVE_HOST_NAME = "com.piifilter.host";
 
@@ -23,12 +25,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     port.onDisconnect.addListener(() => {
       if (chrome.runtime.lastError) {
-        console.error("Native host disconnect:", chrome.runtime.lastError.message);
+        logError("Native host disconnect:", chrome.runtime.lastError.message);
       }
     });
 
     port.postMessage({ text: message.text });
   } catch (err) {
+    logError("Fehler in background.js:", err);
     sendResponse({ ok: false, error: err.message });
   }
 
