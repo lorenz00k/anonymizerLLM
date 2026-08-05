@@ -18,21 +18,49 @@ function setText(inputEl, newText) {
   document.execCommand("insertText", false, newText);
 }
 
-function processAndResend(inputEl) {
+function callHost(text) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage({ type: "PROCESS_TEXT", text }, (response) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
+      if (response && response.ok) {
+        resolve(response);
+      } else {
+        reject(new Error(response ? response.error : "keine Antwort vom Host"));
+      }
+    });
+  });
+}
+async function processAndResend(inputEl) {
   const originalText = inputEl.innerText;
   if (!originalText.trim()) return;
 
   console.log("[PII Filter] Abgefangener Text:", originalText);
-  const transformed = originalText.toUpperCase(); // Platzhalter, spaeter echte Erkennung
 
   isProcessing = true;
-  setText(inputEl, transformed);
+  try {
+    const response = await callHost(originalText);
 
-  setTimeout(() => {
-    const sendButton = getSendButton(inputEl);
-    if (sendButton) sendButton.click();
+    // Vault (aus shared.js) mit den neuen Funden befuellen
+    Object.assign(vault, response.replacements);
+    console.log("[PII Filter] Erkannt und ersetzt:", response.replacements);
+
+    setText(inputEl, response.result);
+
+    setTimeout(() => {
+      const sendButton = getSendButton(inputEl);
+      if (sendButton) sendButton.click();
+      isProcessing = false;
+    }, 50);
+  } catch (err) {
+    console.error("[PII Filter] Fehler beim Host-Aufruf:", err);
     isProcessing = false;
-  }, 50);
+    // Bewusste Entscheidung: bei Fehler NICHT senden, damit nichts
+    // ungeprueft rausgeht. Alternative waere: unveraendert senden -
+    // aber das widerspricht dem eigentlichen Zweck des Tools.
+  }
 }
 
 document.addEventListener(

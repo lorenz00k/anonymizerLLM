@@ -13,11 +13,8 @@ const INPUT_SELECTOR = 'div[contenteditable="true"][data-testid="chat-input"]';
 // was asynchron ist und preventDefault() zu spaet auslösen wuerde.
 let filterEnabled = true;
 
-// Platzhalter -> echter Wert. Kommt spaeter vom lokalen Host statt
-// hier hardcoded zu sein.
-const vault = {
-  "[REDACTED_PERSON_1]": "Frau Müller",
-};
+// wird von intercept-send.js zur Laufzeit befuellt
+const vault = {};
 
 // Einmalig beim Laden den echten gespeicherten Wert holen
 chrome.storage.local.get(["filterEnabled"], (result) => {

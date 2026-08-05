@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/host/src" />
       <excludeFolder url="file://$MODULE_DIR$/host/.venv" />
     </content>
+    <orderEntry type="jdk" jdkName="~/Desktop/git/anonymizerLLM/host/.venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

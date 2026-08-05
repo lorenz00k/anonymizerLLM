@@ -6,9 +6,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   try {
     const port = chrome.runtime.connectNative(NATIVE_HOST_NAME);
+    let responded = false;
+
+    const timeout = setTimeout(() => {
+      if (!responded) {
+        responded = true;
+        sendResponse({ ok: false, error: "Host hat nicht rechtzeitig geantwortet" });
+        port.disconnect();
+      }
+    }, 5000);
 
     port.onMessage.addListener((response) => {
-      sendResponse({ ok: true, result: response.result });
+      sendResponse({ ok: true, result: response.result, replacements: response.replacements });
       port.disconnect();
     });
 
