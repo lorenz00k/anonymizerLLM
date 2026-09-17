@@ -48,6 +48,10 @@ function replaceTextInNode(node, vault) {
 }
 
 function deanonymizeArticle(article) {
+  if (!deanonymizeEnabled) {
+    logDebug("Deanonymisierung deaktiviert, überspringe.");
+    return;
+  }
   logTrace("deanonymizeArticle gestartet, article:", article);
   logTrace("ist article noch im DOM?", document.body.contains(article));
 
@@ -65,6 +69,10 @@ function deanonymizeArticle(article) {
 const responseObserver = new MutationObserver(() => {
   if (!filterEnabled) {
     logTrace("Observer: filter deaktiviert");
+    return;
+  }
+  if(!deanonymizeEnabled){
+    logTrace("Observer: zurückübersetzen deaktiviert");
     return;
   }
 

@@ -7,14 +7,23 @@ dependencies = [
     "presidio-analyzer",
     "presidio-anonymizer",
     "spacy",
+    "fastapi",
+    "uvicorn",
 ]
 
 [project.scripts]
 piifilter-host = "piifilter.__main__:main"
+piifilter-rules-ui = "piifilter.rules_server:run"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+piifilter = ["static/*.html"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

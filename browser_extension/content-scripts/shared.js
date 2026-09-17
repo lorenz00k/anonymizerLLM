@@ -30,6 +30,19 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
+
+let deanonymizeEnabled = true;
+
+chrome.storage.local.get(["deanonymizeEnabled"], (data) => {
+  deanonymizeEnabled = data.deanonymizeEnabled !== false;
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && "deanonymizeEnabled" in changes) {
+    deanonymizeEnabled = changes.deanonymizeEnabled.newValue !== false;
+  }
+});
+
 function getInputElement() {
   return document.querySelector(INPUT_SELECTOR);
 }

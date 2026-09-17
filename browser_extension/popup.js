@@ -10,25 +10,17 @@ filterToggle.addEventListener("change", () => {
   logInfo("[PII Filter] Filter", filterToggle.checked ? "aktiviert" : "deaktiviert");
 });
 
+const deanonymizeToggle = document.getElementById("deanonymizeToggle");
 
-document.getElementById("send").addEventListener("click", () => {
-  const text = document.getElementById("input").value;
-  const statusEl = document.getElementById("status");
-  const outputEl = document.getElementById("output");
+chrome.storage.local.get(["deanonymizeEnabled"], (result) => {
+  deanonymizeToggle.checked = result.deanonymizeEnabled !== false; // Standard: an
+});
 
-  statusEl.textContent = "Sende an lokale App...";
-  outputEl.textContent = "";
+deanonymizeToggle.addEventListener("change", () => {
+  chrome.storage.local.set({ deanonymizeEnabled: deanonymizeToggle.checked });
+  logInfo("[PII Filter] Rückübersetzen", deanonymizeToggle.checked ? "aktiviert" : "deaktiviert");
+});
 
-  chrome.runtime.sendMessage({ type: "PROCESS_TEXT", text }, (response) => {
-    if (chrome.runtime.lastError) {
-      statusEl.textContent = "Fehler: " + chrome.runtime.lastError.message;
-      return;
-    }
-    if (response && response.ok) {
-      outputEl.textContent = response.result;
-      statusEl.textContent = "OK - Antwort von der lokalen App erhalten.";
-    } else {
-      statusEl.textContent = "Fehler: " + (response ? response.error : "keine Antwort");
-    }
-  });
+document.getElementById("openRulesUi").addEventListener("click", () => {
+  chrome.tabs.create({ url: "http://127.0.0.1:8756" });
 });

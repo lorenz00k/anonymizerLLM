@@ -6,3 +6,5 @@ Requires-Python: >=3.10
 Requires-Dist: presidio-analyzer
 Requires-Dist: presidio-anonymizer
 Requires-Dist: spacy
+Requires-Dist: fastapi
+Requires-Dist: uvicorn

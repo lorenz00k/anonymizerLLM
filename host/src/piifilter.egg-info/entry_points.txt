@@ -1,2 +1,3 @@
 [console_scripts]
 piifilter-host = piifilter.__main__:main
+piifilter-rules-ui = piifilter.rules_server:run

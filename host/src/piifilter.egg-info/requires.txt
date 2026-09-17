@@ -1,3 +1,5 @@
 presidio-analyzer
 presidio-anonymizer
 spacy
+fastapi
+uvicorn

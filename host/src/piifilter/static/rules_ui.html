@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>PII Filter – Eigene Regeln</title>
+<style>
+  body {
+    font-family: sans-serif;
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 0 16px;
+    background: #f0f0f0;
+  }
+  h1, h2 {
+    font-size: 20px;
+    margin: 0 0 16px 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+    background: white;
+  }
+  th, td {
+    border: 1px solid #999;
+    padding: 8px;
+    text-align: left;
+  }
+  th { background: #e0e0e0; }
+  input { padding: 6px; margin-right: 8px; }
+  button { padding: 6px 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <h1>Eigene Regeln</h1>
+  <table>
+    <thead><tr><th>Original</th><th>Fake-Wert</th><th></th></tr></thead>
+    <tbody id="rulesBody"></tbody>
+  </table>
+
+  <h2>Neue Regel</h2>
+  <input id="original" placeholder="z.B. Projekt Phoenix">
+  <input id="fake" placeholder="z.B. Projekt Falke">
+  <button onclick="add()">Hinzufügen</button>
+
+  <script>
+    async function loadRules() {
+      const res = await fetch("/rules");
+      const rules = await res.json();
+      const body = document.getElementById("rulesBody");
+      body.innerHTML = Object.entries(rules).map(([o, f]) => `
+        <tr>
+          <td>${o}</td>
+          <td>${f}</td>
+          <td><button onclick="remove('${o}')">Löschen</button></td>
+        </tr>
+      `).join("");
+    }
+
+    async function add() {
+      const original = document.getElementById("original").value;
+      const fake_value = document.getElementById("fake").value;
+      if (!original || !fake_value) return;
+      await fetch("/rules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ original, fake_value })
+      });
+      document.getElementById("original").value = "";
+      document.getElementById("fake").value = "";
+      loadRules();
+    }
+
+    async function remove(original) {
+      await fetch("/rules/" + encodeURIComponent(original), { method: "DELETE" });
+      loadRules();
+    }
+
+    loadRules();
+  </script>
+</body>
+</html>
