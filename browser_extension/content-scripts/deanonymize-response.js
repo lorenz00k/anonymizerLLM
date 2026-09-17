@@ -14,6 +14,39 @@ function getStreamingState(article) {
   return streamingEl.getAttribute("data-is-streaming");
 }
 
+function replaceTextInNode(node, vault) {
+  if (node.nodeType === Node.TEXT_NODE) {
+    let text = node.textContent;
+    let changed = false;
+    for (const [placeholder, real] of Object.entries(vault)) {
+      if (text.includes(placeholder)) {
+        text = text.replaceAll(placeholder, real);
+        changed = true;
+      }
+    }
+    if (changed) {
+      node.textContent = text;
+    }
+    return changed;
+  }
+
+  // sr-only / aria-hidden Elemente ueberspringen, damit wir nicht in
+  // unsichtbaren Screenreader-Text hineinschreiben
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    if (node.classList?.contains("sr-only") || node.getAttribute?.("aria-hidden") === "true") {
+      return false;
+    }
+  }
+
+  let anyChanged = false;
+  for (const child of Array.from(node.childNodes)) {
+    if (replaceTextInNode(child, vault)) {
+      anyChanged = true;
+    }
+  }
+  return anyChanged;
+}
+
 function deanonymizeArticle(article) {
   logTrace("deanonymizeArticle gestartet, article:", article);
   logTrace("ist article noch im DOM?", document.body.contains(article));
@@ -22,26 +55,10 @@ function deanonymizeArticle(article) {
   logTrace("textEl gefunden:", textEl);
   const target = textEl || article;
 
-  // sr-only Elemente ausschliessen, um Dopplung zu vermeiden
-  const clone = target.cloneNode(true);
-  clone.querySelectorAll(".sr-only, [aria-hidden='true']").forEach(el => el.remove());
-  const currentText = clone.innerText;
-
-  logDebug("Deanonmisiert input: ", currentText);
-
-  let replaced = currentText;
-  let foundAny = false;
-  for (const [placeholder, real] of Object.entries(vault)) {
-    if (replaced.includes(placeholder)) {
-      foundAny = true;
-      replaced = replaced.replaceAll(placeholder, real);
-    }
-  }
+  const foundAny = replaceTextInNode(target, vault);
 
   if (foundAny) {
-    logInfo("Antwort deanonymisiert (", Object.keys(vault).filter(p => currentText.includes(p)).length, "Ersetzung(en) )");
-    logDebug("Deanonymisierte Antwort (Klartext):", replaced);
-    target.innerText = replaced;
+    logInfo("Antwort deanonymisiert (Formatierung erhalten)");
   }
 }
 
