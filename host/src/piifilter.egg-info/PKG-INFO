@@ -3,3 +3,6 @@ Name: piifilter
 Version: 0.1.0
 Summary: Lokaler Native-Messaging-Host fuer PII-Filterung
 Requires-Python: >=3.10
+Requires-Dist: presidio-analyzer
+Requires-Dist: presidio-anonymizer
+Requires-Dist: spacy

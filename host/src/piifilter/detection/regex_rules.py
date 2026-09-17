@@ -26,11 +26,15 @@ PATTERNS = {
 FAKE_EMAILS = ["maxmustermann@example.com", "erika.musterfrau@example.com", "john.doe@example.com"]
 FAKE_IBANS = ["DE00000000000000000000", "DE11111111111111111111"]
 FAKE_PHONES = ["+49 30 1234567", "+49 89 7654321"]
+FAKE_NAMES = ["Max Mustermann", "Erika Musterfrau", "John Doe", "Anna Schmidt"]
+FAKE_LOCATIONS = ["Musterstadt", "Beispielhausen", "Testdorf"]
 
 FAKE_POOLS = {
     "EMAIL": FAKE_EMAILS,
     "IBAN": FAKE_IBANS,
     "PHONE": FAKE_PHONES,
+    "PERSON": FAKE_NAMES,
+    "LOCATION": FAKE_LOCATIONS,
 }
 
 

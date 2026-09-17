@@ -68,6 +68,7 @@ function showInlineError(inputEl, message) {
 }
 
 async function processAndResend(inputEl) {
+    logInfo("processAndResend GESTARTET, Zeitstempel:", Date.now());
   const originalText = inputEl.innerText;
   if (!originalText.trim()) return;
 
@@ -86,6 +87,7 @@ async function processAndResend(inputEl) {
 
     setTimeout(() => {
       const sendButton = getSendButton(inputEl);
+      logInfo("Klicke Sendebutton JETZT, Zeitstempel:", Date.now(), "Text im Feld:", inputEl.innerText);
       if (sendButton) sendButton.click();
       isProcessing = false;
     }, 50);
@@ -122,10 +124,13 @@ document.addEventListener(
     const inputEl = getInputElement();
     if (!inputEl) return;
     const sendButton = getSendButton(inputEl);
+    logInfo("Klick erkannt. sendButton:", sendButton, "event.target:", event.target, "contains:", sendButton?.contains(event.target));
+
     if (!sendButton || !sendButton.contains(event.target)) return;
 
     event.preventDefault();
     event.stopPropagation();
+    logInfo("preventDefault ausgefuehrt, starte processAndResend");
     processAndResend(inputEl);
   },
   true

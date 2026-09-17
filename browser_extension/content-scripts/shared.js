@@ -35,9 +35,5 @@ function getInputElement() {
 }
 
 function getSendButton(inputEl) {
-  let container = inputEl.closest('div[class*="relative"]')?.parentElement;
-  if (!container) container = inputEl.parentElement?.parentElement?.parentElement;
-  if (!container) return null;
-  const buttons = container.querySelectorAll('button[data-cds="Button"]');
-  return buttons[buttons.length - 1] || null;
+  return document.querySelector('button[aria-label*="senden" i], button[aria-label*="send" i]');
 }

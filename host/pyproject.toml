@@ -3,7 +3,11 @@ name = "piifilter"
 version = "0.1.0"
 description = "Lokaler Native-Messaging-Host fuer PII-Filterung"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "presidio-analyzer",
+    "presidio-anonymizer",
+    "spacy",
+]
 
 [project.scripts]
 piifilter-host = "piifilter.__main__:main"

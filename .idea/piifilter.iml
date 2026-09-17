@@ -2,7 +2,7 @@
 <module external.system.id="pyproject.toml" type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$/host">
-      <sourceFolder url="file://$MODULE_DIR$/host/src" />
+      <sourceFolder url="file://$MODULE_DIR$/host/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/host/.venv" />
     </content>
     <orderEntry type="jdk" jdkName="~/Desktop/git/anonymizerLLM/host/.venv" jdkType="Python SDK" />

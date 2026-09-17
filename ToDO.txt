@@ -1,0 +1,4 @@
+ToDO:
+- erweiterung für gemini, chatGpt usw.
+- Toogle einstellen-> also optionale in extension anzeigen (z.B. Rückübersetzung ein/ausschalten)
+

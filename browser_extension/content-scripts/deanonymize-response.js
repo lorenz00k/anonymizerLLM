@@ -21,7 +21,12 @@ function deanonymizeArticle(article) {
   const textEl = article.querySelector("p.font-claude-response-body");
   logTrace("textEl gefunden:", textEl);
   const target = textEl || article;
-  const currentText = target.innerText;
+
+  // sr-only Elemente ausschliessen, um Dopplung zu vermeiden
+  const clone = target.cloneNode(true);
+  clone.querySelectorAll(".sr-only, [aria-hidden='true']").forEach(el => el.remove());
+  const currentText = clone.innerText;
+
   logDebug("Deanonmisiert input: ", currentText);
 
   let replaced = currentText;

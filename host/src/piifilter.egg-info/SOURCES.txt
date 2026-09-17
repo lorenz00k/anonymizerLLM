@@ -6,5 +6,6 @@ src/piifilter.egg-info/PKG-INFO
 src/piifilter.egg-info/SOURCES.txt
 src/piifilter.egg-info/dependency_links.txt
 src/piifilter.egg-info/entry_points.txt
+src/piifilter.egg-info/requires.txt
 src/piifilter.egg-info/top_level.txt
 src/piifilter/detection/regex_rules.py
