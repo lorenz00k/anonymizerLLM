@@ -1,4 +1,6 @@
 ToDO:
 - erweiterung für gemini, chatGpt usw.
 - Toogle einstellen-> also optionale in extension anzeigen (z.B. Rückübersetzung ein/ausschalten)
-
+- LLM-Kontextprüfung (was als Betriebsgeheimnis gilt, soll aus dem Kontext her gefiltert werden)
+- website (Regel-UI-Server) automatisch starten -> integrieren in Native-Message-Host 
+- reload bleibt alles da? und dann persitenz
