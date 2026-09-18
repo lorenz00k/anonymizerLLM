@@ -50,3 +50,8 @@ function getInputElement() {
 function getSendButton(inputEl) {
   return document.querySelector('button[aria-label*="senden" i], button[aria-label*="send" i]');
 }
+
+function getChatId() {
+  const match = window.location.pathname.match(/\/chat\/([a-f0-9-]+)/);
+  return match ? match[1] : null;
+}

@@ -1,18 +1,15 @@
 """
 Presidio-basierte Erkennung.
-
-Ersetzt/ergaenzt die reine Regex-Erkennung aus regex_rules.py um
-NLP-gestuetzte Erkennung (v.a. Personennamen, Orte, Organisationen).
+Findet Kandidaten (v.a. Personennamen, Orte) im ORIGINALTEXT und
+ordnet ihnen einen Fake-Wert zu. Ersetzt selbst nichts im Text -
+das uebernimmt combined.py zentral.
 """
-from dataclasses import dataclass
 from presidio_analyzer import AnalyzerEngine
 from presidio_analyzer.nlp_engine import NlpEngineProvider
-from presidio_anonymizer import AnonymizerEngine
 
 from piifilter.detection.regex_rules import FAKE_POOLS
+from piifilter.detection.types import Match, Finding
 
-# Presidio muss explizit wissen, welches spaCy-Modell zu welcher Sprache
-# gehoert - ohne diese Konfiguration laedt es nur Englisch-Recognizer.
 NLP_CONFIGURATION = {
     "nlp_engine_name": "spacy",
     "models": [{"lang_code": "de", "model_name": "de_core_news_lg"}],
@@ -22,16 +19,8 @@ provider = NlpEngineProvider(nlp_configuration=NLP_CONFIGURATION)
 nlp_engine = provider.create_engine()
 
 analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["de"])
-anonymizer = AnonymizerEngine()
 
 ENTITIES = ["PERSON", "LOCATION"]
-
-
-@dataclass
-class Finding:
-    placeholder: str
-    original: str
-    category: str
 
 GREETING_WORDS = {"hallo", "hi", "hey", "liebe", "lieber", "sehr", "guten", "moin"}
 
@@ -50,15 +39,25 @@ def _trim_greeting(text: str, start: int, end: int) -> tuple[int, int]:
         return start + offset, end
     return start, end
 
-def detect_and_anonymize(text: str, language: str = "de") -> tuple[str, list[Finding]]:
+
+def find_matches(text: str, language: str = "de") -> tuple[list[Match], list[Finding]]:
+    """
+    Durchsucht den Originaltext nach PERSON/LOCATION-Entitaeten.
+    Gibt zwei Listen zurueck:
+    - matches: Fundstellen mit Position, die combined.py im Text
+      ersetzen soll.
+    - extra_findings: zusaetzliche, positionslose Vault-Eintraege
+      (Vor-/Nachname einzeln), damit Teilerwaehnungen in Claudes
+      Antwort spaeter trotzdem deanonymisiert werden koennen.
+    """
     results = analyzer.analyze(text=text, entities=ENTITIES, language=language)
 
-    findings: list[Finding] = []
+    matches: list[Match] = []
+    extra_findings: list[Finding] = []
     assigned: dict[str, str] = {}
     used_counts: dict[str, int] = {}
 
-    result = text
-    for r in sorted(results, key=lambda r: r.start, reverse=True):
+    for r in results:
         start, end = r.start, r.end
         if r.entity_type == "PERSON":
             start, end = _trim_greeting(text, start, end)
@@ -76,17 +75,14 @@ def detect_and_anonymize(text: str, language: str = "de") -> tuple[str, list[Fin
             fake_value = pool[count % len(pool)] if isinstance(pool, list) else pool
             used_counts[category] = count + 1
             assigned[original] = fake_value
-            findings.append(Finding(fake_value, original, category))
 
             if category == "PERSON":
                 original_parts = original.split()
                 fake_parts = fake_value.split()
                 if len(original_parts) >= 2 and len(fake_parts) >= 2:
-                    # Vorname -> Fake-Vorname
-                    findings.append(Finding(fake_parts[0], original_parts[0], category))
-                    # Nachname -> Fake-Nachname
-                    findings.append(Finding(fake_parts[-1], original_parts[-1], category))
+                    extra_findings.append(Finding(fake_parts[0], original_parts[0], category))
+                    extra_findings.append(Finding(fake_parts[-1], original_parts[-1], category))
 
-        result = result[:start] + fake_value + result[end:]
+        matches.append(Match(start, end, original, fake_value, category))
 
-    return result, findings
+    return matches, extra_findings

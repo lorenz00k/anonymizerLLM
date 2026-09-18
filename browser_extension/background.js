@@ -29,7 +29,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     });
 
-    port.postMessage({ text: message.text });
+    port.postMessage({ text: message.text, chatId: message.chatId });
   } catch (err) {
     logError("Fehler in background.js:", err);
     sendResponse({ ok: false, error: err.message });

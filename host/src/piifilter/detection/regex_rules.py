@@ -1,18 +1,13 @@
 """
-Regex-basierte PII-Erkennung - Phase 1.
-Ersetzt Funde durch plausible, synthetische Fake-Werte statt reiner
-[REDACTED_...]-Tags, damit der Text fuer das LLM natuerlicher wirkt.
+Regex-basierte PII-Erkennung.
+Findet Kandidaten im ORIGINALTEXT und ordnet ihnen einen plausiblen,
+synthetischen Fake-Wert zu. Ersetzt selbst nichts im Text - das
+uebernimmt combined.py zentral, nachdem alle Stufen ihre Funde
+gemeldet haben.
 """
 import re
-from dataclasses import dataclass
 
-
-@dataclass
-class Finding:
-    placeholder: str
-    original: str
-    category: str
-
+from piifilter.detection.types import Match
 
 PATTERNS = {
     "EMAIL": re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"),
@@ -20,9 +15,6 @@ PATTERNS = {
     "PHONE": re.compile(r"\b(?:\+\d{1,3}[\s-]?)?\(?\d{2,5}\)?[\s-]?\d{3,4}[\s-]?\d{3,4}\b"),
 }
 
-# Feste Pools an Fake-Werten pro Kategorie. Einfach gehalten fuer Phase 1 -
-# Phase 2 (Presidio/LLM Guard) kann hier durch einen richtigen Faker
-# ersetzt werden (z.B. die Python-Library "Faker").
 FAKE_EMAILS = ["maxmustermann@example.com", "erika.musterfrau@example.com", "john.doe@example.com"]
 FAKE_IBANS = ["DE00000000000000000000", "DE11111111111111111111"]
 FAKE_PHONES = ["+49 30 1234567", "+49 89 7654321"]
@@ -38,38 +30,29 @@ FAKE_POOLS = {
 }
 
 
-def detect_and_anonymize(text: str) -> tuple[str, list[Finding]]:
+def find_matches(text: str) -> list[Match]:
     """
-    Durchsucht den Text, ersetzt Funde durch synthetische Fake-Werte
-    (statt [REDACTED_...] Tags). Innerhalb eines Aufrufs bekommt
-    jeder EINZIGARTIGE Original-Wert konsequent denselben Fake-Wert -
-    wichtig, falls dieselbe E-Mail mehrfach im Text vorkommt.
+    Durchsucht den Originaltext nach allen Regex-Mustern. Jeder
+    EINZIGARTIGE Original-Wert bekommt konsequent denselben Fake-Wert
+    innerhalb eines Aufrufs.
     """
-    findings: list[Finding] = []
-    result = text
-
-    # Original -> bereits zugewiesener Fake-Wert (fuer Konsistenz
-    # innerhalb einer Nachricht)
+    matches: list[Match] = []
     assigned: dict[str, str] = {}
     used_counts: dict[str, int] = {}
 
     for category, pattern in PATTERNS.items():
         pool = FAKE_POOLS[category]
-
-        def replace_match(match: re.Match) -> str:
-            original = match.group(0)
+        for m in pattern.finditer(text):
+            original = m.group(0)
 
             if original in assigned:
-                return assigned[original]
+                fake_value = assigned[original]
+            else:
+                count = used_counts.get(category, 0)
+                fake_value = pool[count % len(pool)]
+                used_counts[category] = count + 1
+                assigned[original] = fake_value
 
-            count = used_counts.get(category, 0)
-            fake_value = pool[count % len(pool)]
-            used_counts[category] = count + 1
+            matches.append(Match(m.start(), m.end(), original, fake_value, category))
 
-            assigned[original] = fake_value
-            findings.append(Finding(fake_value, original, category))
-            return fake_value
-
-        result = pattern.sub(replace_match, result)
-
-    return result, findings
+    return matches

@@ -23,11 +23,12 @@ def main() -> None:
             break
 
         text = message.get("text", "")
+        chat_id = message.get("chatId")
         log.debug("Empfangen (Klartext): %s", text)
-        log.debug("Nachricht empfangen (%d Zeichen)", len(text))
+        log.debug("Nachricht empfangen (%d Zeichen), Chat-ID: %s", len(text), chat_id)
 
         try:
-            result_text, findings = detect_and_anonymize(text)
+            result_text, findings = detect_and_anonymize(text, chat_id)
 
             # replacements gehen zurueck an die Extension, damit sie den
             # lokalen JS-Vault (in shared.js) damit befuellen kann

@@ -18,9 +18,9 @@ function setText(inputEl, newText) {
   document.execCommand("insertText", false, newText);
 }
 
-function callHost(text) {
+function callHost(text, chatId) {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ type: "PROCESS_TEXT", text }, (response) => {
+    chrome.runtime.sendMessage({ type: "PROCESS_TEXT", text, chatId }, (response) => {
       if (chrome.runtime.lastError) {
         reject(new Error(chrome.runtime.lastError.message));
         return;
@@ -68,15 +68,16 @@ function showInlineError(inputEl, message) {
 }
 
 async function processAndResend(inputEl) {
-    logInfo("processAndResend GESTARTET, Zeitstempel:", Date.now());
+    logInfo("processAndResend GESTARTET, Zeitstempel: ", Date.now());
   const originalText = inputEl.innerText;
   if (!originalText.trim()) return;
 
-  logDebug("Abgefangener Text:", originalText);
+  const chatId = getChatId();
+  logDebug("Abgefangener Text: ", originalText, " Chat-ID: ", chatId);
 
   isProcessing = true;
   try {
-    const response = await callHost(originalText);
+    const response = await callHost(originalText, chatId);
 
     // Vault (aus shared.js) mit den neuen Funden befuellen
     Object.assign(vault, response.replacements);
