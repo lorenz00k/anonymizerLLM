@@ -6,40 +6,27 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, FileResponse
-from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
 
-from piifilter.custom_rules import load_rules, add_rule, remove_rule
+from piifilter.routes.global_rules_routes import router as global_rules_router
+from piifilter.routes.folder_routes import router as folder_router
+from piifilter.routes.chat_routes import router as chat_router
 
 app = FastAPI()
 
 STATIC_DIR = Path(__file__).parent / "static"
 
+app.include_router(global_rules_router)
+app.include_router(folder_router)
+app.include_router(chat_router)
 
-class Rule(BaseModel):
-    original: str
-    fake_value: str
+# CSS/JS unter /static/... ausliefern
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/", response_class=HTMLResponse)
 def index():
     return FileResponse(STATIC_DIR / "rules_ui.html")
-
-
-@app.get("/rules")
-def get_rules():
-    return load_rules()
-
-
-@app.post("/rules")
-def create_rule(rule: Rule):
-    add_rule(rule.original, rule.fake_value)
-    return {"ok": True}
-
-
-@app.delete("/rules/{original}")
-def delete_rule(original: str):
-    remove_rule(original)
-    return {"ok": True}
 
 
 def run():

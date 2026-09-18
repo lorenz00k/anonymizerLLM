@@ -1,0 +1,59 @@
+body {
+  font-family: sans-serif;
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 0 16px;
+  background: #f0f0f0;
+}
+h1, h2 {
+  font-size: 20px;
+  margin: 0 0 16px 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24px;
+  background: white;
+}
+th, td {
+  border: 1px solid #999;
+  padding: 8px;
+  text-align: left;
+}
+th { background: #e0e0e0; }
+input { padding: 6px; margin-right: 8px; }
+button { padding: 6px 12px; cursor: pointer; }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.tabs button {
+  padding: 8px 16px;
+  border: 1px solid #999;
+  background: #e0e0e0;
+  border-radius: 4px 4px 0 0;
+}
+.tabs button.active {
+  background: white;
+  font-weight: bold;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+.folder-card {
+  background: white;
+  border: 1px solid #999;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+.folder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.folder-header .name { font-weight: bold; }
+.hint { color: #666; font-size: 14px; }
