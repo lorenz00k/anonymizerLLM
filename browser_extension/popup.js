@@ -22,5 +22,17 @@ deanonymizeToggle.addEventListener("change", () => {
 });
 
 document.getElementById("openRulesUi").addEventListener("click", () => {
-  chrome.tabs.create({ url: "http://127.0.0.1:8756" });
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    const match = tab.url ? tab.url.match(/\/chat\/([a-f0-9-]+)/) : null;
+    const chatId = match ? match[1] : null;
+
+    let url = "http://127.0.0.1:8756";
+    if (chatId) {
+      const label = encodeURIComponent(tab.title || chatId);
+      url += `?scope=chat&id=${chatId}&label=${label}`;
+    }
+
+    chrome.tabs.create({ url });
+  });
 });

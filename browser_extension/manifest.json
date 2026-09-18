@@ -3,7 +3,7 @@
   "name": "Anonymizer LLM",
   "version": "1.0",
   "description": "Test connection between add-on extension and local application",
-  "permissions": ["nativeMessaging", "storage"],
+  "permissions": ["nativeMessaging", "storage", "activeTab"],
 
   "background": {
     "service_worker": "background.js"
