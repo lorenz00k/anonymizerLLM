@@ -13,8 +13,16 @@ const INPUT_SELECTOR = 'div[contenteditable="true"][data-testid="chat-input"]';
 // was asynchron ist und preventDefault() zu spaet auslösen wuerde.
 let filterEnabled = true;
 
-// wird von intercept-send.js zur Laufzeit befuellt
-const vault = {};
+// Persistenter Vault, pro Chat getrennt: { [chatId]: {placeholder: original} }
+let vaults = {};
+
+//Bei reload gespeicherte Werte aus vault auslesen
+chrome.storage.local.get(["vaults"], (result) => {
+  if (result.vaults) {
+    vaults = result.vaults;
+    logDebug("Vaults aus Storage geladen, Chats:", Object.keys(vaults).length);
+  }
+});
 
 // Einmalig beim Laden den echten gespeicherten Wert holen
 chrome.storage.local.get(["filterEnabled"], (result) => {
@@ -54,4 +62,14 @@ function getSendButton(inputEl) {
 function getChatId() {
   const match = window.location.pathname.match(/\/chat\/([a-f0-9-]+)/);
   return match ? match[1] : null;
+}
+
+function getVault(){
+  const id = getChatId() || "unbekannt";
+  if (!vaults[id]) vaults[id] = {};
+  return vaults[id];
+}
+
+function saveVaults() {
+  chrome.storage.local.set({vaults});
 }

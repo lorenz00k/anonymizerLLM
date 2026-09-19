@@ -17,22 +17,50 @@ function getStreamingState(article) {
 
 function replaceTextInNode(node, vault) {
   if (node.nodeType === Node.TEXT_NODE) {
-    let text = node.textContent;
+    const text = node.textContent;
+    const placeholders = Object.keys(vault).filter((p) => text.includes(p));
+    if (placeholders.length === 0) return false;
+
+    const fragment = document.createDocumentFragment();
+    let remaining = text;
     let changed = false;
-    for (const [placeholder, real] of Object.entries(vault)) {
-      if (text.includes(placeholder)) {
-        text = text.replaceAll(placeholder, real);
-        changed = true;
+
+    while (remaining.length > 0) {
+      let earliestIndex = -1;
+      let matchedPlaceholder = null;
+      for (const placeholder of placeholders) {
+        const idx = remaining.indexOf(placeholder);
+        if (idx !== -1 && (earliestIndex === -1 || idx < earliestIndex)) {
+          earliestIndex = idx;
+          matchedPlaceholder = placeholder;
+        }
       }
+
+      if (earliestIndex === -1) {
+        fragment.appendChild(document.createTextNode(remaining));
+        break;
+      }
+
+      if (earliestIndex > 0) {
+        fragment.appendChild(document.createTextNode(remaining.slice(0, earliestIndex)));
+      }
+
+      const mark = document.createElement("mark");
+      mark.className = "pii-filter-restored";
+      mark.title = "Automatisch zurückübersetzt";
+      mark.textContent = vault[matchedPlaceholder];
+      fragment.appendChild(mark);
+      changed = true;
+
+      remaining = remaining.slice(earliestIndex + matchedPlaceholder.length);
     }
+
     if (changed) {
-      node.textContent = text;
+      node.parentNode.replaceChild(fragment, node);
     }
     return changed;
   }
 
-  // sr-only / aria-hidden Elemente ueberspringen, damit wir nicht in
-  // unsichtbaren Screenreader-Text hineinschreiben
   if (node.nodeType === Node.ELEMENT_NODE) {
     if (node.classList?.contains("sr-only") || node.getAttribute?.("aria-hidden") === "true") {
       return false;
@@ -60,11 +88,23 @@ function deanonymizeArticle(article) {
   logTrace("textEl gefunden:", textEl);
   const target = textEl || article;
 
-  const foundAny = replaceTextInNode(target, vault);
+  const foundAny = replaceTextInNode(target, getVault());
 
   if (foundAny) {
     logInfo("Antwort deanonymisiert (Formatierung erhalten)");
   }
+}
+function isAssistantArticle(article) {
+  return getStreamingState(article) !== null;
+}
+
+function deanonymizeAllArticles() {
+  const articles = document.querySelectorAll(ARTICLE_SELECTOR);
+  articles.forEach((article) => {
+    if(isAssistantArticle(article)){
+      deanonymizeArticle(article)
+    }
+  });
 }
 
 const responseObserver = new MutationObserver(() => {
@@ -84,7 +124,7 @@ const responseObserver = new MutationObserver(() => {
   // diesen Wiederholungsfall.
   const textEl = article.querySelector("p.font-claude-response-body");
   const target = textEl || article;
-  const needsFix = Object.keys(vault).some((placeholder) =>
+  const needsFix = Object.keys(getVault()).some((placeholder) =>
     target.innerText.includes(placeholder)
   );
 
@@ -111,3 +151,20 @@ responseObserver.observe(document.body, {
 });
 
 logInfo("deanonymize-response.js geladen");
+
+// Einmalig nach dem Laden der Seite: kompletten bisherigen Verlauf
+// fixen, nicht nur die neueste Antwort (relevant nach einem Reload,
+// wenn React die ganze Konversation aus dem Server-Zustand neu
+// rendert).
+setTimeout(deanonymizeAllArticles, POST_STREAM_DELAY_MS);
+
+const style = document.createElement("style");
+style.textContent = `
+  mark.pii-filter-restored {
+    background: ##90D5FF;
+    color: inherit;
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+`;
+document.head.appendChild(style);

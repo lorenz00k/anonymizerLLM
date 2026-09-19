@@ -80,7 +80,9 @@ async function processAndResend(inputEl) {
     const response = await callHost(originalText, chatId);
 
     // Vault (aus shared.js) mit den neuen Funden befuellen
+    const vault = getVault();
     Object.assign(vault, response.replacements);
+    saveVaults();
     logInfo("Anonymisiert:", Object.keys(response.replacements).length, "Ersetzung(en)");
     logDebug("Erkannt und ersetzt:", response.replacements);
 
