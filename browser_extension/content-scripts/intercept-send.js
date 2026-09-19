@@ -102,12 +102,15 @@ async function processAndResend(inputEl) {
 document.addEventListener(
   "keydown",
   (event) => {
-    if (isProcessing) return;
-    if (!filterEnabled) return;
-    if (event.key !== "Enter" || event.shiftKey) return;
 
-    const inputEl = getInputElement();
-    if (!inputEl || !inputEl.contains(event.target)) return;
+      const inputEl = getInputElement();
+      if (!inputEl || !inputEl.contains(event.target)) return;
+      if (event.key !== "Enter" || event.shiftKey) return;
+      if (isProcessing) return;
+      if (!filterEnabled) {
+        logTrace("Observer: filter deaktiviert");
+        return;
+      }
 
     event.preventDefault();
     event.stopPropagation();
@@ -119,15 +122,17 @@ document.addEventListener(
 document.addEventListener(
   "click",
   (event) => {
-    if (isProcessing) return;
-    if (!filterEnabled) return;
-
     const inputEl = getInputElement();
     if (!inputEl) return;
     const sendButton = getSendButton(inputEl);
     logInfo("Klick erkannt. sendButton:", sendButton, "event.target:", event.target, "contains:", sendButton?.contains(event.target));
 
     if (!sendButton || !sendButton.contains(event.target)) return;
+    if (isProcessing) return;
+    if (!filterEnabled) {
+        logTrace("Observer: filter deaktiviert");
+        return;
+      }
 
     event.preventDefault();
     event.stopPropagation();

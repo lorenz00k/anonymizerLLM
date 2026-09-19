@@ -3,6 +3,7 @@ const POST_STREAM_DELAY_MS = 500; // Puffer, bis React fertig ge-re-rendert hat
 
 const pendingArticles = new WeakSet(); // verhindert doppelte Timer fuer denselben Artikel
 
+//letzte Nachricht von claude
 function getLastArticle() {
   const articles = document.querySelectorAll(ARTICLE_SELECTOR);
   return articles.length > 0 ? articles[articles.length - 1] : null;
@@ -67,18 +68,9 @@ function deanonymizeArticle(article) {
 }
 
 const responseObserver = new MutationObserver(() => {
-  if (!filterEnabled) {
-    logTrace("Observer: filter deaktiviert");
-    return;
-  }
-  if(!deanonymizeEnabled){
-    logTrace("Observer: zurückübersetzen deaktiviert");
-    return;
-  }
-
   const article = getLastArticle();
   if (!article) {
-    logTrace("Observer: kein Artikel gefunden");
+    logTrace("Observer: kein Nachrichtenelement gefunden");
     return;
   }
 
