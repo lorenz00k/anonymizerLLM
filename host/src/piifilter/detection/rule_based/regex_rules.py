@@ -7,7 +7,7 @@ gemeldet haben.
 """
 import re
 
-from piifilter.detection.types import Match
+from piifilter.detection.rule_based.types import Match
 
 PATTERNS = {
     "EMAIL": re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"),

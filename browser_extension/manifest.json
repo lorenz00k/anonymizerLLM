@@ -17,7 +17,11 @@
       "js": [
         "logger.js",
         "content-scripts/shared.js",
-        "content-scripts/intercept-send.js",
+        "content-scripts/intercept/dom-utils.js",
+        "content-scripts/intercept/host-client.js",
+        "content-scripts/intercept/review-panel.js",
+        "content-scripts/intercept/review-controller.js",
+        "content-scripts/intercept/intercept-send.js",
         "content-scripts/deanonymize-response.js"
       ],
       "run_at": "document_idle"

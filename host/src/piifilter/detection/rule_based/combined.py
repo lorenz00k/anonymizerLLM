@@ -17,9 +17,9 @@ sich die Positionen der noch offenen Funde nicht verschieben).
 import re
 
 from piifilter.custom_rules import get_effective_rules
-from piifilter.detection.regex_rules import find_matches as regex_find_matches
-from piifilter.detection.presidio_engine import find_matches as presidio_find_matches
-from piifilter.detection.types import Match, Finding
+from piifilter.detection.rule_based.regex_rules import find_matches as regex_find_matches
+from piifilter.detection.rule_based.presidio_engine import find_matches as presidio_find_matches
+from piifilter.detection.rule_based.types import Match, Finding
 
 
 def _match_case(fake_value: str, matched_text: str) -> str:
@@ -57,6 +57,43 @@ def _resolve_overlaps(matches: list[Match]) -> list[Match]:
     return accepted
 
 
+def _propagate_matches(text: str, accepted: list[Match]) -> list[Match]:
+    """
+    Presidio/Regex/Custom finden Vorkommen z.T. kontextabhaengig - z.B.
+    "Jonas Wüst" als vollen Namen erkannt, aber ein spaeteres
+    alleinstehendes "Jonas" im selben Text nicht (das NER-Modell erkennt
+    dort keinen Namen). Ergebnis ohne diesen Schritt: derselbe Name wird
+    an einer Stelle maskiert, an einer anderen nicht.
+
+    Sucht fuer JEDEN akzeptierten Fund alle weiteren Vorkommen desselben
+    Wortlauts (case-insensitiv, ganzes Wort) im Rest des Textes und
+    maskiert sie mit demselben Fake-Wert - unabhaengig davon, ob eine der
+    drei Erkennungsstufen diese Stelle selbst erkannt haette.
+    """
+    covered = [(m.start, m.end) for m in accepted]
+    new_matches: list[Match] = []
+    seen_originals: set[str] = set()
+
+    for m in accepted:
+        key = m.original.lower()
+        if key in seen_originals:
+            # Fall doppelt vorhanden (z.B. "Jonas" UND "jonas" schon als
+            # getrennte Funde akzeptiert) - der erste Durchlauf deckt via
+            # IGNORECASE ohnehin schon alle Schreibweisen ab.
+            continue
+        seen_originals.add(key)
+
+        pattern = re.compile(r"\b" + re.escape(m.original) + r"\b", re.IGNORECASE)
+        for occ in pattern.finditer(text):
+            if any(occ.start() < c_end and c_start < occ.end() for c_start, c_end in covered):
+                continue  # ueberschneidet sich mit einem bereits abgedeckten Fund
+            actual_fake = _match_case(m.fake_value, occ.group(0))
+            new_matches.append(Match(occ.start(), occ.end(), occ.group(0), actual_fake, m.category))
+            covered.append((occ.start(), occ.end()))
+
+    return accepted + new_matches
+
+
 def detect_and_anonymize(text: str, chat_id: str = None) -> tuple[str, list[Finding]]:
     custom_matches = _find_custom_matches(text, chat_id)
     regex_matches = regex_find_matches(text)
@@ -65,6 +102,7 @@ def detect_and_anonymize(text: str, chat_id: str = None) -> tuple[str, list[Find
     # Reihenfolge bestimmt Prioritaet: Custom > Regex > Presidio
     all_matches = custom_matches + regex_matches + presidio_matches
     accepted = _resolve_overlaps(all_matches)
+    accepted = _propagate_matches(text, accepted)
 
     # Von hinten nach vorne ersetzen, damit die Positionen der noch
     # nicht verarbeiteten Matches gueltig bleiben.

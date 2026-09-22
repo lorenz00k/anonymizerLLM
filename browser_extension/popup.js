@@ -21,6 +21,17 @@ deanonymizeToggle.addEventListener("change", () => {
   logInfo("[PII Filter] Rückübersetzen", deanonymizeToggle.checked ? "aktiviert" : "deaktiviert");
 });
 
+const llmToggle = document.getElementById("llmToggle");
+
+chrome.storage.local.get(["llmEnabled"], (result) => {
+  llmToggle.checked = result.llmEnabled === true; // Standard: aus
+});
+
+llmToggle.addEventListener("change", () => {
+  chrome.storage.local.set({ llmEnabled: llmToggle.checked });
+  logInfo("[PII Filter] KI-Erkennung", llmToggle.checked ? "aktiviert" : "deaktiviert");
+});
+
 document.getElementById("openRulesUi").addEventListener("click", () => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     const tab = tabs[0];

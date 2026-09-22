@@ -7,8 +7,8 @@ das uebernimmt combined.py zentral.
 from presidio_analyzer import AnalyzerEngine
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 
-from piifilter.detection.regex_rules import FAKE_POOLS
-from piifilter.detection.types import Match, Finding
+from piifilter.detection.rule_based.regex_rules import FAKE_POOLS
+from piifilter.detection.rule_based.types import Match, Finding
 
 NLP_CONFIGURATION = {
     "nlp_engine_name": "spacy",

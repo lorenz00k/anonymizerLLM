@@ -1,6 +1,14 @@
 ToDO:
 - erweiterung für gemini, chatGpt usw.
-- Toogle einstellen-> also optionale in extension anzeigen (z.B. Rückübersetzung ein/ausschalten)
+- Toogle einstellen-> also optionale in extension anzeigen (z.B. Rückübersetzung ein/ausschalten) + 
+
 - LLM-Kontextprüfung (was als Betriebsgeheimnis gilt, soll aus dem Kontext her gefiltert werden)
 - website (Regel-UI-Server) automatisch starten -> integrieren in Native-Message-Host 
-- reload bleibt alles da? und dann persitenz
+
+- reload bleibt alles da? und dann persitenz + 
+
+
+1. Lokales LLM als vierte Erkennungsstufe
+2. Multi-Site-Support (ChatGPT/Gemini) — inkl. Site-Adapter-Umbau
+3. Rules-UI-Server automatisch starten (systemd-User-Service, ins Install-Skript integriert)
+4. Distribution vorbereiten (PyInstaller/Nuitka für den Host, Chrome-Web-			Store-Vorbereitung für die Extension)
