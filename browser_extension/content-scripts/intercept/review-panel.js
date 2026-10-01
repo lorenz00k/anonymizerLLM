@@ -6,6 +6,7 @@
  *
  * handlers:
  *   onAcceptAll()               - "Alle akzeptieren" geklickt
+ *   onDeclineAll()              - "Alle verwerfen" geklcikt
  *   onToggle(item, accepted)    - eine einzelne Checkbox geaendert
  *   onSend()                    - "Senden" geklickt (nur aktiv wenn nicht wartend)
  *   onSkipLlm()                 - "Trotzdem jetzt senden" geklickt
@@ -81,6 +82,12 @@ function renderPanelTitle(handlers) {
   acceptAllBtn.style.cssText = "font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;background:#f7f7f7;cursor:pointer;";
   acceptAllBtn.addEventListener("click", handlers.onAcceptAll);
   buttonGroup.appendChild(acceptAllBtn);
+
+  const declineAllBtn = document.createElement("button");
+  declineAllBtn.textContent = "Alle verwerfen";
+  declineAllBtn.style.cssText = "font-size:11px;padding:3px 8px;border:1px solid #ddd;border-radius:4px;background:#f7f7f7;cursor:pointer;";
+  declineAllBtn.addEventListener("click", handlers.onDeclineAll);
+  buttonGroup.appendChild(declineAllBtn);
 
   title.appendChild(buttonGroup);
   return title;

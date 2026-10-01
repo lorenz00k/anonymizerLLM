@@ -96,6 +96,12 @@ function getReviewHandlers() {
       refreshPanel();
       updateLivePreview();
     },
+    onDeclineAll: () => {
+      activeReview.phase1Items.forEach((i) => (i.accepted = false));
+      activeReview.phase2Items.forEach((i) => (i.accepted = false));
+      refreshPanel();
+      updateLivePreview();
+    },
     onRescan: () => {
       if (!activeReview) return;
       const inputEl = activeReview.inputEl;
