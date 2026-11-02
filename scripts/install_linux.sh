@@ -13,7 +13,7 @@ echo "== 2. Python-Abhaengigkeiten installieren (kann etwas dauern) =="
 pip install -e "$HOST_DIR"
 
 echo "== 3. Deutsches spaCy-Sprachmodell herunterladen (~50-100MB) =="
-python -m spacy download de_core_news_sm
+python -m spacy download de_core_news_lg
 
 HOST_EXECUTABLE="$HOST_DIR/.venv/bin/piifilter-host"
 
