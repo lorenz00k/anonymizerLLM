@@ -182,88 +182,71 @@ def find_contextual_matches(text: str, model: str = MODEL) -> list[dict]:
         snippet = finding.get("text", "")
         span = fuzzy_find(text, snippet)
         if span is None:
-            print(f"  [WARNUNG] Snippet nicht im Original gefunden (auch fuzzy nicht), verworfen: {snippet!r}")
+            print(
+                f"  [WARNUNG] Snippet nicht im Original gefunden (auch fuzzy nicht), verworfen: {snippet!r}"
+            )
             continue
         start, end = span
-        findings.append({
-            "start": start,
-            "end": end,
-            "text": text[start:end],
-            "category": category,
-            "reason": reason,
-        })
+        findings.append(
+            {
+                "start": start,
+                "end": end,
+                "text": text[start:end],
+                "category": category,
+                "reason": reason,
+            }
+        )
 
     findings = merge_close_findings(findings)
     for f in findings:
-        f["text"] = text[f["start"]:f["end"]]
+        f["text"] = text[f["start"] : f["end"]]
 
     return findings
 
 
 TEST_TEXTS = [
     # --- FIRMENGEHEIMNIS: sollte anschlagen ---
-
     "Kannst du mir helfen eine interne Ankündigung zu schreiben? Projekt Phoenix launcht jetzt doch "
     "erst im Q3 2027 statt wie geplant im Q1. Schreibe es bitte auf Englisch wie besprochen.",
-
     "Wir haben eine kritische Sicherheitslücke in unserem Zahlungssystem gefunden, die noch nicht "
     "gepatcht ist - wie formuliere ich das für den internen Vorfallsbericht?",
-
     "Unser größter Kunde, die Musterfirma GmbH, will den Vertrag um 40% kürzen. Das ist natürlich eine "
     "blöde Nachricht. Wie bereite ich das intern für den Vorstand auf? Mach es bitte sehr professionell.",
-
     "Der Umsatz in Q2 lag bei 2,3 Millionen Euro, 15% unter Plan, das ist noch nicht kommuniziert - "
     "hilf mir das für die interne Quartalsmail zu formulieren.",
-
     # --- PERSONENKENNUNG: sollte anschlagen ---
-
     "Mein aktuelles Gehalt beträgt 58.000€ brutto im Jahr, wie verhandle ich am besten eine Erhöhung auf 65.000€?",
-
     "Ich habe unter meiner Personalnummer PN-48213 ein Problem mit der Zeiterfassung, kannst du mir "
     "eine Mail an die IT formulieren?",
-
     "a121212@ASUS_Zenbook",
-
     "Der Fehler tritt auf meinem Rechner m.schneider-PC-Finance auf, wenn ich mich ins interne Portal einlogge.",
-
     "Ich bekomme einen Fehler beim Öffnen von C:\\Users\\jkovac\\Documents\\Gehaltsabrechnung_2026.xlsx",
-
     # --- TECHNISCHES_SECRET: sollte anschlagen ---
     "Kannst du diesen Code debuggen?\n\n"
-    "API_KEY = \"sk-live-9f8a7b6c5d4e3f2a1b0c\"\n"
+    'API_KEY = "sk-live-9f8a7b6c5d4e3f2a1b0c"\n'
     "response = requests.get(url, headers={'Authorization': API_KEY})",
-
     "Meine .env Datei sieht so aus:\n\n"
     "DB_HOST=internal-db-prod.company.local\n"
     "DB_PASSWORD=Tr0ub4dor&3xyz\n\n"
     "warum bekomme ich trotzdem einen Connection-Timeout?",
-
     # --- Negativ-Fälle: sollten NICHTS finden (neuer, engerer Scope) ---
-
     # Allgemeine Gesundheitsangabe ohne Firmen-/Kennungsbezug - jetzt explizit NICHT mehr sensibel
     "Ich bin an Mukoviszidose erkrankt und suche Kontakt zu anderen Betroffenen in meiner Region.",
-
     # Beziehung/Coming-Out - jetzt explizit NICHT mehr sensibel (alter Testfall)
     "Ich möchte meinen Eltern einen Brief schreiben, in dem ich ihnen erzähle, dass ich seit einem Jahr "
     "einen festen Freund habe und mich als schwul geoutet habe.",
-
     # Scheidung/Kirchenaustritt - jetzt explizit NICHT mehr sensibel (alter Testfall)
     "Ich bin seit letztem Monat aus der Kirche ausgetreten, weil meine Gemeinde meine Scheidung "
     "nicht akzeptiert hat. Welches Motto würdest du für eine Einhorn-Party für meine Tochter empfehlen?",
-
     # Öffentliche Person
     "Was denkst du über die Wirtschaftspolitik von Christian Lindner in den letzten Jahren?",
-
     # Sarkasmus
     "Mein Chef ist bestimmt ein Alien, der glaubt jeden Montag um 7 Uhr ein Meeting anzusetzen sei eine gute Idee 😄",
-
     # Hypothetisch
     "Stell dir vor, jemand hätte eine schwere Krankheit und müsste seinem Arbeitgeber davon erzählen - "
     "wie würdest du das formulieren?",
-
     # Harmlos
     "Wie schreibe ich eine Einkaufsliste für Milch, Brot und Eier?",
-
     # Allgemeine Fachfrage zu Unternehmen/Wirtschaft, aber ohne konkretes eigenes Firmengeheimnis
     "Wie berechnet man den EBITDA einer Firma und wofür wird die Kennzahl typischerweise verwendet?",
 ]
@@ -271,6 +254,7 @@ TEST_TEXTS = [
 
 if __name__ == "__main__":
     import sys
+
     model = sys.argv[1] if len(sys.argv) > 1 else MODEL
     print(f"=== Modell: {model} ===")
     for i, text in enumerate(TEST_TEXTS, 1):

@@ -2,6 +2,7 @@
 Lokale Weboberfläche zum Verwalten eigener Regeln.
 Laeuft nur auf localhost, nie extern erreichbar.
 """
+
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -31,4 +32,5 @@ def index():
 
 def run():
     import uvicorn
+
     uvicorn.run(app, host="127.0.0.1", port=8756)

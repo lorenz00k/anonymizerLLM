@@ -3,6 +3,7 @@ Duenne, gemeinsame HTTP-Schicht fuer alle Ollama-Aufrufe der LLM-Stufe.
 Kennt weder Erkennung (llm_find.py) noch Umformulierung (llm_rewrite.py) -
 nur wie man mit Ollama redet.
 """
+
 import logging
 
 import requests
@@ -21,8 +22,13 @@ KEEP_ALIVE = "30m"
 WARMUP_TIMEOUT_SECONDS = 60
 
 
-def chat(messages: list[dict], timeout: float, model: str = DEFAULT_MODEL,
-         options: dict = None, json_format: bool = False) -> str | None:
+def chat(
+    messages: list[dict],
+    timeout: float,
+    model: str = DEFAULT_MODEL,
+    options: dict = None,
+    json_format: bool = False,
+) -> str | None:
     """
     Fuehrt einen einzelnen Chat-Call gegen Ollama aus und gibt den
     Antworttext zurueck, oder None bei einem Verbindungsfehler (Ollama

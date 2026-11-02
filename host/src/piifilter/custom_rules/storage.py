@@ -3,6 +3,7 @@ Gemeinsame JSON-Persistenz fuer alle drei Regel-Ebenen.
 Liegt bewusst ausserhalb des Repos unter ~/.piifilter/, damit die
 Regeln Neuinstallationen ueberleben.
 """
+
 import json
 from pathlib import Path
 

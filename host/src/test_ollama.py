@@ -3,6 +3,7 @@ import requests
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL = "llama3.2"
 
+
 def ask(prompt: str) -> str:
     response = requests.post(
         OLLAMA_URL,

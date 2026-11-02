@@ -5,6 +5,7 @@ Jede Nachricht (in beide Richtungen) hat:
   - 4 Byte Länge, little-endian, unsigned int
   - danach UTF-8 kodiertes JSON dieser Länge
 """
+
 import sys
 import json
 import struct

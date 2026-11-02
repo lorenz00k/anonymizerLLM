@@ -4,6 +4,7 @@ Andere Module importieren ausschliesslich von hier
 (from piifilter.custom_rules import ...), nie direkt aus den
 Untermodulen - so bleibt die interne Aufteilung frei aenderbar.
 """
+
 from piifilter.custom_rules.storage import load_rules_raw, save_rules
 from piifilter.custom_rules.global_rules import add_global_rule, remove_global_rule
 from piifilter.custom_rules.folders import (
@@ -18,6 +19,7 @@ from piifilter.custom_rules.effective import get_effective_rules
 
 
 # ---- Abwaertskompatibilitaet (alte Rules-UI/Popup nutzen diese Namen) ----
+
 
 def load_rules() -> dict:
     """Nur die globale Ebene, im alten flachen Format."""

@@ -4,6 +4,7 @@ Findet Kandidaten (v.a. Personennamen, Orte) im ORIGINALTEXT und
 ordnet ihnen einen Fake-Wert zu. Ersetzt selbst nichts im Text -
 das uebernimmt combined.py zentral.
 """
+
 from presidio_analyzer import AnalyzerEngine
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 

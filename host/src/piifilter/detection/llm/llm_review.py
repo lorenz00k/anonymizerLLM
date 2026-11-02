@@ -24,12 +24,14 @@ riskanter ist als bei einzelnen PII-Werten, und (b) das LLM mit 0.5-3s klar
 langsamer ist und den bisher synchronen/schnellen Sendevorgang sonst
 ausbremsen wuerde.
 """
+
 import logging
 
-logger = logging.getLogger(__name__)
 
 from piifilter.detection.llm import llm_find, llm_rewrite
 from piifilter.detection.rule_based.types import Finding
+
+logger = logging.getLogger(__name__)
 
 
 def get_llm_suggestions(anonymized_text: str, chat_id: str = None) -> list[dict]:
@@ -48,16 +50,20 @@ def get_llm_suggestions(anonymized_text: str, chat_id: str = None) -> list[dict]
     suggestions = []
     for i, m in enumerate(matches):
         rewritten = llm_rewrite.rewrite_finding(m.original, m.category)
-        suggestions.append({
-            "id": f"llm-{i}",
-            "start": m.start,
-            "end": m.end,
-            "text": m.original,
-            "suggestedReplacement": rewritten,
-            "category": m.category,
-        })
+        suggestions.append(
+            {
+                "id": f"llm-{i}",
+                "start": m.start,
+                "end": m.end,
+                "text": m.original,
+                "suggestedReplacement": rewritten,
+                "category": m.category,
+            }
+        )
 
-    logger.info("get_llm_suggestions fertig, %d Vorschlag/Vorschläge: %s", len(suggestions), suggestions)
+    logger.info(
+        "get_llm_suggestions fertig, %d Vorschlag/Vorschläge: %s", len(suggestions), suggestions
+    )
     return suggestions
 
 
@@ -90,14 +96,14 @@ def apply_llm_suggestions(
         # geaendert hat (Nutzer hat waehrenddessen weitergetippt), passt die
         # Position evtl. nicht mehr exakt - dann lieber ueberspringen als
         # eine falsche Stelle im Text zu zerschneiden.
-        if result[s["start"]:s["end"]] != s["text"]:
+        if result[s["start"] : s["end"]] != s["text"]:
             continue
-        result = result[:s["start"]] + s["suggestedReplacement"] + result[s["end"]:]
+        result = result[: s["start"]] + s["suggestedReplacement"] + result[s["end"] :]
 
     findings = [
         Finding(s["suggestedReplacement"], s["text"], s["category"])
         for s in accepted
-        if anonymized_text[s["start"]:s["end"]] == s["text"]
+        if anonymized_text[s["start"] : s["end"]] == s["text"]
     ]
 
     return result, findings

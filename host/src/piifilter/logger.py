@@ -5,6 +5,7 @@ logger.js (JS-Seite): trace < debug < info < warn < error.
 trace/debug duerfen Klartext (Original-PII, Nutzereingaben) enthalten.
 info/warn/error NICHT - dort nur Metadaten (Anzahl Funde, Status).
 """
+
 import logging
 
 TRACE_LEVEL = 5

@@ -8,6 +8,7 @@ Kategorie-Platzhalter als fake_value zurueck. Die eigentliche Umformulierung
 uebernimmt llm_rewrite.py (bewusst als eigenes Modul getrennt, damit dieser
 sorgfaeltig getunte Erkennungs-Prompt stabil bleibt).
 """
+
 import difflib
 import json
 import logging
@@ -162,7 +163,9 @@ def _merge_close_findings(findings: list[dict], gap: int = 15) -> list[dict]:
     return merged
 
 
-def find_matches(text: str, chat_id: str = None, model: str = ollama_client.DEFAULT_MODEL) -> list[Match]:
+def find_matches(
+    text: str, chat_id: str = None, model: str = ollama_client.DEFAULT_MODEL
+) -> list[Match]:
     """
     Analysiert `text` auf Firmengeheimnisse/Personenkennungen/technische Secrets.
 
@@ -222,32 +225,39 @@ def find_matches(text: str, chat_id: str = None, model: str = ollama_client.DEFA
         if actual_text != snippet:
             logger.info(
                 "Fuzzy-Match: Modell lieferte %r, tatsaechlich verankert auf %r (Position %d-%d)",
-                snippet, actual_text, start, end,
+                snippet,
+                actual_text,
+                start,
+                end,
             )
 
-        findings.append({
-            "start": start,
-            "end": end,
-            "text": text[start:end],
-            "category": category,
-            "reason": reason,
-        })
+        findings.append(
+            {
+                "start": start,
+                "end": end,
+                "text": text[start:end],
+                "category": category,
+                "reason": reason,
+            }
+        )
 
     before_merge = len(findings)
     findings = _merge_close_findings(findings)
     if len(findings) != before_merge:
         logger.info("Merge: %d Findings zu %d zusammengefasst", before_merge, len(findings))
 
-
     matches: list[Match] = []
     counters: dict[str, int] = {}
     for f in findings:
         counters[f["category"]] = counters.get(f["category"], 0) + 1
         placeholder = f"[{f['category']}_{counters[f['category']]}]"
-        original_text = text[f["start"]:f["end"]]
+        original_text = text[f["start"] : f["end"]]
         matches.append(Match(f["start"], f["end"], original_text, placeholder, f["category"]))
 
-    logger.info("LLM Erkennung fertig: %d Fund(e) nach Filterung: %s", len(matches),
-                [(m.original, m.category) for m in matches])
+    logger.info(
+        "LLM Erkennung fertig: %d Fund(e) nach Filterung: %s",
+        len(matches),
+        [(m.original, m.category) for m in matches],
+    )
 
     return matches

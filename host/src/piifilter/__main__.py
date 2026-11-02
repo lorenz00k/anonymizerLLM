@@ -3,6 +3,7 @@ Einstiegspunkt des lokalen Hosts.
 Wird von Chrome als eigener Prozess gestartet, sobald die Extension
 chrome.runtime.connectNative() aufruft.
 """
+
 import threading
 from piifilter.logger import log
 
@@ -38,11 +39,13 @@ def _handle_llm_suggestions_async(text: str, chat_id, request_id) -> None:
     if suggestions:
         log.info("LLM-Vorschlaege: %d", len(suggestions))
 
-    _send({
-        "type": "llm_suggestions",
-        "requestId": request_id,
-        "suggestions": suggestions,
-    })
+    _send(
+        {
+            "type": "llm_suggestions",
+            "requestId": request_id,
+            "suggestions": suggestions,
+        }
+    )
 
 
 def _handle_anonymize(message: dict) -> None:
@@ -52,7 +55,12 @@ def _handle_anonymize(message: dict) -> None:
     request_id = message.get("requestId")
     llm_enabled = message.get("llmEnabled", False)
     log.debug("Empfangen (Klartext): %s", text)
-    log.debug("Nachricht empfangen (%d Zeichen), Chat-ID: %s, LLM aktiv: %s", len(text), chat_id, llm_enabled)
+    log.debug(
+        "Nachricht empfangen (%d Zeichen), Chat-ID: %s, LLM aktiv: %s",
+        len(text),
+        chat_id,
+        llm_enabled,
+    )
 
     try:
         result_text, findings = detect_and_anonymize(text, chat_id)
@@ -61,12 +69,14 @@ def _handle_anonymize(message: dict) -> None:
         log.trace("Ersetzungen (Klartext): %s", replacements)
         log.info("Verarbeitet: %d Ersetzung(en)", len(findings))
 
-        _send({
-            "type": "anonymize_result",
-            "requestId": request_id,
-            "result": result_text,
-            "replacements": replacements,
-        })
+        _send(
+            {
+                "type": "anonymize_result",
+                "requestId": request_id,
+                "result": result_text,
+                "replacements": replacements,
+            }
+        )
 
         # Phase 2 startet erst NACHDEM die schnelle Antwort raus ist, und
         # laeuft parallel weiter - der Haupt-Thread geht sofort zurueck zu
@@ -78,20 +88,24 @@ def _handle_anonymize(message: dict) -> None:
                 daemon=True,
             ).start()
         else:
-            _send({
-                "type": "llm_suggestions",
-                "requestId": request_id,
-                "suggestions": [],
-            })
+            _send(
+                {
+                    "type": "llm_suggestions",
+                    "requestId": request_id,
+                    "suggestions": [],
+                }
+            )
 
     except Exception:
         log.exception("Fehler bei der Verarbeitung")
-        _send({
-            "type": "anonymize_result",
-            "requestId": request_id,
-            "result": text,
-            "replacements": {},
-        })
+        _send(
+            {
+                "type": "anonymize_result",
+                "requestId": request_id,
+                "result": text,
+                "replacements": {},
+            }
+        )
 
 
 def _handle_apply_llm(message: dict) -> None:
@@ -108,20 +122,25 @@ def _handle_apply_llm(message: dict) -> None:
         replacements = {f.placeholder: f.original for f in findings}
         log.info("LLM-Vorschlaege angewendet: %d von %d", len(findings), len(suggestions))
 
-        _send({
-            "type": "apply_llm_result",
-            "requestId": request_id,
-            "result": result_text,
-            "replacements": replacements,
-        })
+        _send(
+            {
+                "type": "apply_llm_result",
+                "requestId": request_id,
+                "result": result_text,
+                "replacements": replacements,
+            }
+        )
     except Exception:
         log.exception("Fehler beim Anwenden der LLM-Vorschlaege")
-        _send({
-            "type": "apply_llm_result",
-            "requestId": request_id,
-            "result": text,
-            "replacements": {},
-        })
+        _send(
+            {
+                "type": "apply_llm_result",
+                "requestId": request_id,
+                "result": text,
+                "replacements": {},
+            }
+        )
+
 
 def _handle_retry_rewrite(message: dict) -> None:
     """Auf Wunsch aus dem Review-Panel ('Neu umformulieren' bei einem
@@ -136,18 +155,22 @@ def _handle_retry_rewrite(message: dict) -> None:
 
     try:
         rewritten = llm_rewrite.rewrite_finding(text, category, temperature=0.7)
-        _send({
-            "type": "retry_rewrite_result",
-            "requestId": request_id,
-            "suggestedReplacement": rewritten,
-        })
+        _send(
+            {
+                "type": "retry_rewrite_result",
+                "requestId": request_id,
+                "suggestedReplacement": rewritten,
+            }
+        )
     except Exception:
         log.exception("Fehler beim Neu-Umformulieren")
-        _send({
-            "type": "retry_rewrite_result",
-            "requestId": request_id,
-            "suggestedReplacement": f"[{category}]",
-        })
+        _send(
+            {
+                "type": "retry_rewrite_result",
+                "requestId": request_id,
+                "suggestedReplacement": f"[{category}]",
+            }
+        )
 
 
 def main() -> None:

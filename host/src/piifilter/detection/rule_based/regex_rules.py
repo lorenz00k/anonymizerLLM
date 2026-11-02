@@ -5,6 +5,7 @@ synthetischen Fake-Wert zu. Ersetzt selbst nichts im Text - das
 uebernimmt combined.py zentral, nachdem alle Stufen ihre Funde
 gemeldet haben.
 """
+
 import re
 
 from piifilter.detection.rule_based.types import Match

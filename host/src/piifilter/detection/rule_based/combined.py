@@ -14,6 +14,7 @@ Presidio. Erst nachdem alle Funde gesammelt und Ueberlappungen
 aufgeloest sind, wird EINMAL ersetzt (von hinten nach vorne, damit
 sich die Positionen der noch offenen Funde nicht verschieben).
 """
+
 import re
 
 from piifilter.custom_rules import get_effective_rules
@@ -108,7 +109,7 @@ def detect_and_anonymize(text: str, chat_id: str = None) -> tuple[str, list[Find
     # nicht verarbeiteten Matches gueltig bleiben.
     result = text
     for m in sorted(accepted, key=lambda m: m.start, reverse=True):
-        result = result[:m.start] + m.fake_value + result[m.end:]
+        result = result[: m.start] + m.fake_value + result[m.end :]
 
     findings = [Finding(m.fake_value, m.original, m.category) for m in accepted]
     findings.extend(presidio_extra_findings)

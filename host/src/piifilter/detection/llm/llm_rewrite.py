@@ -6,6 +6,7 @@ Aufgaben mit unabhaengigen Fehlerquellen - ein fokussierter Prompt pro
 Aufgabe ist zuverlaessiger als ein kombinierter, und der sorgfaeltig
 getunte Erkennungs-Prompt in llm_find.py bleibt dadurch unangetastet.
 """
+
 import logging
 
 from piifilter.detection.llm import ollama_client
@@ -46,7 +47,9 @@ def rewrite_finding(
     hoeherer Wert uebergeben, sonst kaeme bei gleichem Prompt/Snippet exakt
     dasselbe Ergebnis zurueck.
     """
-    logger.info("Rewrite angefordert fuer %r (Kategorie %s, temperature=%s)", snippet, category, temperature)
+    logger.info(
+        "Rewrite angefordert fuer %r (Kategorie %s, temperature=%s)", snippet, category, temperature
+    )
 
     content = ollama_client.chat(
         messages=[
