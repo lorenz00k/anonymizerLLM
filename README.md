@@ -1,4 +1,7 @@
 # Anonymizer LLM
+[![CI](https://github.com/lorenz00k/anonymizerLLM/actions/workflows/ci.yml/badge.svg)](https://github.com/lorenz00k/anonymizerLLM/actions/workflows/ci.yml)
+
+[![Security](https://github.com/lorenz00k/anonymizerLLM/actions/workflows/security.yml/badge.svg)](https://github.com/lorenz00k/anonymizerLLM/actions/workflows/security.yml)
 
 A local privacy filter for AI chat websites. A Chrome extension intercepts your message before it is sent to [claude.ai](https://claude.ai), replaces sensitive data (names, e-mail addresses, IBANs, phone numbers, internal secrets) with realistic placeholders, and swaps the real values back into the answer, so the chat stays readable for you while the provider never sees the originals.
 
@@ -19,7 +22,7 @@ claude.ai  ──►  Chrome extension  ──(Native Messaging)──►  Pytho
 Detection runs in phases:
 
 1. **Instant, automatic (stages 1–3).** All three stages scan the original text independently. Overlaps are resolved by priority (custom rules > regex > Presidio), then everything is replaced in one pass. Further occurrences of an already detected value (e.g. a first name that appears alone later) are masked consistently.
-2. **LLM suggestions (stage 4, optional).** A local model looks for things the pattern-based stages cannot see: trade secrets, internal project names, employee IDs, salaries, API keys and other credentials. It only *suggests*; nothing is replaced yet.
+2. **LLM suggestions (stage 4, optional).** A local model looks for things the pattern-based stages cannot see: trade secrets, internal project names, employee IDs, salaries, API keys and other credentials. It only *suggests*, nothing is replaced yet.
 3. **Review.** A panel in the page lets you accept, decline (or "decline all"), or ask for a new rewording of each suggestion before the message is sent.
 
 The mapping of placeholders to originals (the "vault") is stored per chat, so answers can be translated back to the real values, including after a page reload. Restored words are highlighted in the response.
@@ -33,30 +36,13 @@ The mapping of placeholders to originals (the "vault") is stored per chat, so an
 | Presidio | Person names, locations | spaCy model `de_core_news_lg`, so German text works best. |
 | Local LLM | Company secrets, personal identifiers, technical secrets | Uses Ollama with `llama3.2` by default. Beta, off by default. |
 
-## Repository layout
-
-```
-browser_extension/            Chrome extension (Manifest V3)
-  content-scripts/intercept/  send interception, review panel and controller
-  content-scripts/deanonymize-response.js
-  popup.html / popup.js       toggles and link to the rules UI
-host/                         Python package "piifilter"
-  src/piifilter/
-    detection/rule_based/     regex, Presidio, combined pipeline
-    detection/llm/            Ollama client, detection, rewrite, review workflow
-    custom_rules/             global / folder / chat rule storage
-    routes/, static/          rules UI (FastAPI + static frontend)
-    native_messaging.py       Chrome Native Messaging protocol
-native-messaging-manifest/    host manifest template
-scripts/install_linux.sh      installer for Linux
-```
-
 ## Requirements
 
 - Linux with Google Chrome or Chromium
 - Python 3.10+
 - About 600 MB of disk space for the spaCy model and its dependencies
 - Optional, for the LLM stage: [Ollama](https://ollama.com) running locally with the `llama3.2` model
+- Only for development: Node.js 22 and npm (used for linting the extension)
 
 ## Installation
 
@@ -103,10 +89,19 @@ Then open <http://127.0.0.1:8756> (the popup's *Regeln verwalten* button links t
 
 To keep it running in the background, you can run it as a systemd user service pointing at `host/.venv/bin/piifilter-rules-ui`.
 
+## Development
+
+```bash
+cd host && pip install -e ".[dev]"   # package + pytest + ruff
+ruff check host && ruff format --check host && pytest host
+npm ci && npm run lint               # browser extension
+```
+
+Unit tests are in `host/tests/`. The scripts in `host/evals/` try the real LLM stage and need a running Ollama, so they don't run in CI.
 ## Debugging
 
 - Host log: `/tmp/pii_filter_host.log`. The level is set in `host/src/piifilter/logger.py`; trace/debug levels may contain plaintext PII, so keep it at `INFO` for normal use.
-- `host/src/test.py`, `test_llm_detection.py` and `test_ollama.py` are small scripts for trying the LLM stage and the Ollama connection.
+- To check the Ollama connection, run `python host/evals/check_ollama.py`.
 
 ## Limitations and roadmap
 
