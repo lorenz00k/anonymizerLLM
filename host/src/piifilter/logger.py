@@ -25,7 +25,7 @@ logging.Logger.trace = _trace
 # logging.INFO oder hoeher fuer normale Nutzung
 CURRENT_LOG_LEVEL = logging.INFO
 
-#chmod 700 (only user has full access) for directory & chmod 600 (only user can read& write file) for file
+# chmod 700 (only user has full access) for directory & chmod 600 (only user can read& write file) for file
 LOG_DIR = Path.home() / ".piifilter"
 LOG_DIR.mkdir(mode=0o700, exist_ok=True)
 LOG_FILE = LOG_DIR / "host.log"
