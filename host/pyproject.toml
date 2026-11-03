@@ -23,7 +23,7 @@ piifilter-host = "piifilter.__main__:main"
 piifilter-rules-ui = "piifilter.rules_server:run"
 
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=84.2.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
