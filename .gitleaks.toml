@@ -1,0 +1,8 @@
+title = "anonymizerLLM gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake example key used as test data for the LLM detection"
+regexes = ['''sk-live-9f8a7b6c5d4e3f2a1b0c''']

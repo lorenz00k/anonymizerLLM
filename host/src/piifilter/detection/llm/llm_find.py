@@ -192,14 +192,14 @@ def find_matches(
     if raw is None:
         return []
 
-    logger.info("LLM Rohantwort: %s", raw)
+    logger.debug("LLM Rohantwort: %s", raw)
 
     try:
         parsed = _extract_json(raw)
     except (ValueError, json.JSONDecodeError) as e:
         logger.warning("LLM-Antwort konnte nicht geparst werden: %s", e)
         return []
-    logger.info("LLM Rohantwort: %s", raw)
+    logger.debug("LLM Rohantwort: %s", raw)
 
     findings = []
     for finding in parsed.get("findings", []):
@@ -211,7 +211,7 @@ def find_matches(
             logger.warning("LLM lieferte ungueltige Kategorie %r, Finding verworfen", category)
             continue
         if any(marker in reason.lower() for marker in NEGATION_MARKERS):
-            logger.info("Verworfen (Negation erkannt): %r", snippet)
+            logger.debug("Verworfen (Negation erkannt): %r", snippet)
             continue
 
         snippet = finding.get("text", "")
@@ -223,7 +223,7 @@ def find_matches(
         start, end = span
         actual_text = text[start:end]
         if actual_text != snippet:
-            logger.info(
+            logger.debug(
                 "Fuzzy-Match: Modell lieferte %r, tatsaechlich verankert auf %r (Position %d-%d)",
                 snippet,
                 actual_text,
@@ -244,7 +244,7 @@ def find_matches(
     before_merge = len(findings)
     findings = _merge_close_findings(findings)
     if len(findings) != before_merge:
-        logger.info("Merge: %d Findings zu %d zusammengefasst", before_merge, len(findings))
+        logger.debug("Merge: %d Findings zu %d zusammengefasst", before_merge, len(findings))
 
     matches: list[Match] = []
     counters: dict[str, int] = {}

@@ -61,7 +61,7 @@ def get_llm_suggestions(anonymized_text: str, chat_id: str = None) -> list[dict]
             }
         )
 
-    logger.info(
+    logger.debug(
         "get_llm_suggestions fertig, %d Vorschlag/Vorschläge: %s", len(suggestions), suggestions
     )
     return suggestions
