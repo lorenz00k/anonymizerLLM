@@ -1,0 +1,12 @@
+{
+  "name": "anonymizer-llm-extension",
+  "private": true,
+  "scripts": {
+    "lint": "eslint browser_extension"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0"
+  }
+}

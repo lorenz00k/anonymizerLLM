@@ -34,3 +34,6 @@ Thumbs.db
 
 ## local docu
 docu/
+
+# eslint
+node_modules/
