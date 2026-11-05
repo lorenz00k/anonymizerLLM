@@ -40,6 +40,7 @@ def propagate_matches(text: str, accepted: list[Match]) -> list[Match]:
 
     return accepted + new_matches
 
+
 def resolve_overlaps(matches: list[Match]) -> list[Match]:
     """Hoechste Prioritaet gewinnt, bei Gleichstand der laengere Span,
     danach der weiter vorne stehende."""

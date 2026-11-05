@@ -4,6 +4,7 @@ Findet Kandidaten (v.a. Personennamen, Orte) im ORIGINALTEXT und
 ordnet ihnen einen Fake-Wert zu. Ersetzt selbst nichts im Text -
 das uebernimmt combined.py zentral.
 """
+
 import threading
 from functools import lru_cache
 
@@ -15,26 +16,36 @@ from piifilter.languages import get_language
 
 _build_lock = threading.Lock()
 
+
 @lru_cache(maxsize=None)
 def _build_analyzer(lang_code: str) -> AnalyzerEngine:
     lang_config = get_language(lang_code)
-    nlp = NlpEngineProvider(nlp_configuration={
-        "nlp_engine_name": "spacy",
-        "models": [{"lang_code": lang_config.lang_code, "model_name": lang_config.spacy_model}],
-    }).create_engine()
+    nlp = NlpEngineProvider(
+        nlp_configuration={
+            "nlp_engine_name": "spacy",
+            "models": [{"lang_code": lang_config.lang_code, "model_name": lang_config.spacy_model}],
+        }
+    ).create_engine()
     registry = RecognizerRegistry(supported_languages=[lang_config.lang_code])
     registry.load_predefined_recognizers(nlp_engine=nlp, languages=[lang_config.lang_code])
-    return AnalyzerEngine(nlp_engine=nlp, registry=registry, supported_languages=[lang_config.lang_code])
+    return AnalyzerEngine(
+        nlp_engine=nlp, registry=registry, supported_languages=[lang_config.lang_code]
+    )
+
 
 def get_analyzer(lang_code: str) -> AnalyzerEngine:
     # Lock: Warmup-Thread und erste Nachricht sollen nicht beide laden
     with _build_lock:
         return _build_analyzer(lang_code)
 
+
 def warmup(lang_code: str = "de") -> None:
     get_analyzer(lang_code)
 
-def _trim_greeting(text: str, start: int, end: int, greeting_words: frozenset[str]) -> tuple[int, int]:
+
+def _trim_greeting(
+    text: str, start: int, end: int, greeting_words: frozenset[str]
+) -> tuple[int, int]:
     """Schneidet ein vorangestelltes Gruss-/Anredewort ab, das das NER-Modell
     faelschlich zur PERSON-Entitaet gezaehlt hat ("Hallo Erika" -> "Erika")."""
     snippet = text[start:end]

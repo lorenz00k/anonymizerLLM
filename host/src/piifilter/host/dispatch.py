@@ -8,8 +8,9 @@ HANDLERS = {
     "retry_rewrite": handle_retry_rewrite,
 }
 
+
 def dispatch(message: dict) -> None:
-    mtype = message.get("type", "anonymize")   # altes Format = anonymize
+    mtype = message.get("type", "anonymize")  # altes Format = anonymize
     handler = HANDLERS.get(mtype)
     if handler is None:
         log.warning("Unbekannter Nachrichtentyp: %s", mtype)

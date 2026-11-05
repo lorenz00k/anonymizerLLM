@@ -17,8 +17,9 @@ class FakeDetector:
     def find(self, text, chat_id=None, lang_code=None):
         # Kopien, weil _collect die priority auf den Matches setzt
         self.lang_code.append(lang_code)
-        return [Match(m.start, m.end, m.original, m.fake_value, m.category)
-                for m in self.matches], list(self.extra)
+        return [
+            Match(m.start, m.end, m.original, m.fake_value, m.category) for m in self.matches
+        ], list(self.extra)
 
 
 @pytest.fixture
@@ -33,8 +34,9 @@ def pipeline(monkeypatch):
         return state["rules"]
 
     monkeypatch.setattr(custom_rules, "get_effective_rules", fake_rules)
-    monkeypatch.setattr(combined, "DETECTORS",
-                        [CustomRulesDetector(), RegexDetector(), fake_presidio])
+    monkeypatch.setattr(
+        combined, "DETECTORS", [CustomRulesDetector(), RegexDetector(), fake_presidio]
+    )
 
     def set_presidio(matches, extra=()):
         fake_presidio.set(matches, extra)
@@ -49,11 +51,14 @@ def pipeline(monkeypatch):
 @pytest.fixture
 def fakes(monkeypatch):
     """Nur Fake-Detektoren mit frei waehlbarer Prioritaet."""
+
     def make(*priorities):
         detectors = [FakeDetector(p) for p in priorities]
         monkeypatch.setattr(combined, "DETECTORS", detectors)
         return detectors
+
     return make
+
 
 def test_text_without_pii_is_unchanged(pipeline):
     combined, _, _ = pipeline
@@ -107,11 +112,12 @@ def test_overlapping_matches_are_not_applied_twice(pipeline):
     set_presidio([Match(9, 21, "max@firma.de", "Max Mustermann", "PERSON")])
     result, findings = combined.detect_and_anonymize("Kontakt: max@firma.de")
     assert len(findings) == 1
-    assert findings[0].category == "EMAIL"   # Regex vor Presidio
+    assert findings[0].category == "EMAIL"  # Regex vor Presidio
     assert "Max Mustermann" not in result
 
 
 # ---------- Edge Cases: Prioritaet und Ueberschneidung ----------
+
 
 def test_higher_priority_beats_longer_span(fakes):
     custom, presidio = fakes(30, 10)
@@ -124,8 +130,12 @@ def test_higher_priority_beats_longer_span(fakes):
 
 def test_same_priority_longer_span_wins(fakes):
     (det,) = fakes(10)
-    det.set([Match(0, 5, "Jonas", "Max", "PERSON"),
-             Match(0, 10, "Jonas Wüst", "Max Mustermann", "PERSON")])
+    det.set(
+        [
+            Match(0, 5, "Jonas", "Max", "PERSON"),
+            Match(0, 10, "Jonas Wüst", "Max Mustermann", "PERSON"),
+        ]
+    )
     result, _ = combined.detect_and_anonymize("Jonas Wüst")
     assert result == "Max Mustermann"
 
@@ -140,14 +150,13 @@ def test_adjacent_matches_are_both_applied(fakes):
 
 def test_replacements_with_different_lengths_keep_positions(fakes):
     (det,) = fakes(10)
-    det.set([Match(0, 4, "Anna", "Zoe", "PERSON"),
-             Match(9, 13, "Bert", "Maximilian", "PERSON")])
+    det.set([Match(0, 4, "Anna", "Zoe", "PERSON"), Match(9, 13, "Bert", "Maximilian", "PERSON")])
     result, _ = combined.detect_and_anonymize("Anna und Bert")
     assert result == "Zoe und Maximilian"
 
 
 def test_detector_order_in_list_does_not_matter(fakes):
-    low, high = fakes(10, 30)   # niedrige Prioritaet steht zuerst in der Liste
+    low, high = fakes(10, 30)  # niedrige Prioritaet steht zuerst in der Liste
     low.set([Match(0, 10, "Jonas Wüst", "Max Mustermann", "PERSON")])
     high.set([Match(0, 10, "Jonas Wüst", "Kunde", "CUSTOM")])
     result, _ = combined.detect_and_anonymize("Jonas Wüst")
@@ -155,6 +164,7 @@ def test_detector_order_in_list_does_not_matter(fakes):
 
 
 # ---------- Edge Cases: Propagation ----------
+
 
 def test_propagation_respects_word_boundaries(fakes):
     (det,) = fakes(10)
@@ -165,14 +175,19 @@ def test_propagation_respects_word_boundaries(fakes):
 
 def test_propagation_skips_already_covered_spans(fakes):
     (det,) = fakes(10)
-    det.set([Match(0, 5, "Jonas", "Max", "PERSON"),
-             Match(10, 20, "Jonas Wüst", "Erika Beispiel", "PERSON")])
+    det.set(
+        [
+            Match(0, 5, "Jonas", "Max", "PERSON"),
+            Match(10, 20, "Jonas Wüst", "Erika Beispiel", "PERSON"),
+        ]
+    )
     result, _ = combined.detect_and_anonymize("Jonas und. Jonas Wüst")
     assert "Erika Beispiel" in result
     assert result.count("Max") == 1
 
 
 # ---------- Edge Cases: Sonderfaelle ----------
+
 
 def test_empty_text(pipeline):
     combined, _, _ = pipeline
@@ -185,14 +200,14 @@ def test_presidio_extra_findings_are_included(pipeline):
     set_presidio([Match(0, 10, "Jonas Wüst", "Max Mustermann", "PERSON")], extra)
     _, findings = combined.detect_and_anonymize("Jonas Wüst")
     assert extra[0] in findings and extra[1] in findings
-    assert len(findings) == 3   # 1 Match + 2 positionslose
+    assert len(findings) == 3  # 1 Match + 2 positionslose
 
 
 def test_custom_rule_pattern_is_escaped(pipeline):
     combined, _, set_rules = pipeline
     set_rules({"a.b": "X"})
     result, _ = combined.detect_and_anonymize("axb und a.b")
-    assert result == "axb und x"   # '.' ist kein Regex-Wildcard
+    assert result == "axb und x"  # '.' ist kein Regex-Wildcard
 
 
 def test_umlauts_and_case_in_custom_rule(pipeline):
@@ -215,6 +230,7 @@ def test_original_text_is_not_mutated_between_detectors(pipeline):
     set_presidio([Match(6, 16, "Jonas Wüst", "Max Mustermann", "PERSON")])
     result, _ = combined.detect_and_anonymize("Hallo Jonas Wüst")
     assert result == "Hallo Kunde Wüst"
+
 
 def test_lang_is_passed_to_detectors(fakes):
     (det,) = fakes(10)

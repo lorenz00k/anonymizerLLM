@@ -50,18 +50,26 @@ def test_get_language_falls_back_to_default(lang_code):
 def test_get_language_known(lang_code):
     assert get_language(lang_code).lang_code == lang_code
 
+
 @pytest.mark.parametrize("lang_code", LANGUAGES)
 def test_every_language_has_pool_for_each_regex_category(lang_code):
     for category in regex_rules.PATTERNS:
         assert LANGUAGES[lang_code].fake_pools.get(category), f"{lang_code}: {category}"
 
-@pytest.mark.parametrize("text,expected", [
-    ("Ich wohne seit drei Jahren in Hamburg und arbeite dort als Entwickler.", "de"),
-    ("I have been living in London for three years and work there as a developer.", "en"),
-    ("", "de"),                        # leer
-    ("ok", "de"),                      # zu kurz
-    ("Bonjour, je m'appelle Pierre et j'habite a Paris depuis trois ans.", "de"),  # nicht unterstuetzt
-])
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("Ich wohne seit drei Jahren in Hamburg und arbeite dort als Entwickler.", "de"),
+        ("I have been living in London for three years and work there as a developer.", "en"),
+        ("", "de"),  # leer
+        ("ok", "de"),  # zu kurz
+        (
+            "Bonjour, je m'appelle Pierre et j'habite a Paris depuis trois ans.",
+            "de",
+        ),  # nicht unterstuetzt
+    ],
+)
 def test_detect_language(text, expected):
     assert detect_language(text) == expected
 

@@ -15,13 +15,20 @@ aufgeloest sind, wird EINMAL ersetzt (von hinten nach vorne, damit
 sich die Positionen der noch offenen Funde nicht verschieben).
 """
 
-from piifilter.detection.rule_based.detectors import CustomRulesDetector, RegexDetector, PresidioDetector
+from piifilter.detection.rule_based.detectors import (
+    CustomRulesDetector,
+    RegexDetector,
+    PresidioDetector,
+)
 from piifilter.detection.rule_based.postprocess import propagate_matches, resolve_overlaps
 from piifilter.detection.rule_based.types import Finding, Match
 
 DETECTORS = [CustomRulesDetector(), RegexDetector(), PresidioDetector()]
 
-def _collect(text: str, chat_id: str | None, lang_code:str | None) -> tuple[list[Match], list[Finding]]:
+
+def _collect(
+    text: str, chat_id: str | None, lang_code: str | None
+) -> tuple[list[Match], list[Finding]]:
     matches: list[Match] = []
     extra: list[Finding] = []
     for d in DETECTORS:
@@ -33,7 +40,9 @@ def _collect(text: str, chat_id: str | None, lang_code:str | None) -> tuple[list
     return matches, extra
 
 
-def detect_and_anonymize(text: str, chat_id: str | None = None, lang_code: str | None = None) -> tuple[str, list[Finding]]:
+def detect_and_anonymize(
+    text: str, chat_id: str | None = None, lang_code: str | None = None
+) -> tuple[str, list[Finding]]:
     matches, extra = _collect(text, chat_id, lang_code)
 
     accepted = resolve_overlaps(matches)

@@ -18,11 +18,10 @@ FAKE_POOLS = {
 ENGLISH = LanguageConfig(
     lang_code="en",
     spacy_model="en_core_web_lg",
-    fake_pools= FAKE_POOLS,
+    fake_pools=FAKE_POOLS,
     presidio_entities=("PERSON", "LOCATION"),
     presidio_greeting_words=frozenset(
         {"hello", "hi", "hey", "dear", "love", "good", "welcome", "greetings"}
     ),
     score_threshold=0.5,
 )
-

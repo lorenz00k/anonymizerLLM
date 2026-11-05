@@ -8,8 +8,7 @@ from piifilter.languages import LANGUAGES
 
 def _r(text, snippet, entity, score=0.9):
     start = text.index(snippet)
-    return SimpleNamespace(start=start, end=start + len(snippet),
-                           entity_type=entity, score=score)
+    return SimpleNamespace(start=start, end=start + len(snippet), entity_type=entity, score=score)
 
 
 class FakeAnalyzer:
@@ -27,6 +26,7 @@ def engine(monkeypatch):
         fake = FakeAnalyzer(results)
         monkeypatch.setattr(presidio_engine, "get_analyzer", lambda code: fake)
         return fake
+
     return install
 
 
@@ -34,19 +34,24 @@ def engine(monkeypatch):
 
 GREET = frozenset({"hallo", "sehr"})
 
-@pytest.mark.parametrize("snippet,trimmed", [
-    ("Hallo Erika", "Erika"),
-    ("hallo Erika", "Erika"),
-    ("Hallo, Erika", "Erika"),
-    ("Erika Müller", "Erika Müller"),   # keine Anrede
-    ("Hallo", "Hallo"),                 # nur ein Wort: nichts abschneiden
-])
+
+@pytest.mark.parametrize(
+    "snippet,trimmed",
+    [
+        ("Hallo Erika", "Erika"),
+        ("hallo Erika", "Erika"),
+        ("Hallo, Erika", "Erika"),
+        ("Erika Müller", "Erika Müller"),  # keine Anrede
+        ("Hallo", "Hallo"),  # nur ein Wort: nichts abschneiden
+    ],
+)
 def test_trim_greeting(snippet, trimmed):
     s, e = presidio_engine._trim_greeting(snippet, 0, len(snippet), GREET)
     assert snippet[s:e] == trimmed
 
 
 # ---------- find_matches mit Fake-Analyzer ----------
+
 
 def test_config_values_reach_analyzer(engine):
     fake = engine([])
@@ -64,10 +69,10 @@ def test_german_greeting_is_trimmed_and_pool_is_german(engine):
     matches, extra = presidio_engine.find_matches(text, lang_code="de")
     person, loc = matches
     assert person.original == "Erika Müller"
-    assert text[person.start:person.end] == "Erika Müller"
+    assert text[person.start : person.end] == "Erika Müller"
     assert person.fake_value == LANGUAGES["de"].fake_pools["PERSON"][0]
     assert loc.fake_value == LANGUAGES["de"].fake_pools["LOCATION"][0]
-    assert len(extra) == 2                      # Vor- und Nachname einzeln
+    assert len(extra) == 2  # Vor- und Nachname einzeln
 
 
 def test_english_uses_english_pool_and_greeting(engine):
@@ -81,8 +86,12 @@ def test_english_uses_english_pool_and_greeting(engine):
 
 def test_same_original_gets_same_fake(engine):
     text = "Anna und Anna"
-    engine([_r(text, "Anna", "PERSON"),
-            SimpleNamespace(start=9, end=13, entity_type="PERSON", score=0.9)])
+    engine(
+        [
+            _r(text, "Anna", "PERSON"),
+            SimpleNamespace(start=9, end=13, entity_type="PERSON", score=0.9),
+        ]
+    )
     matches, _ = presidio_engine.find_matches(text, lang_code="de")
     assert matches[0].fake_value == matches[1].fake_value
 

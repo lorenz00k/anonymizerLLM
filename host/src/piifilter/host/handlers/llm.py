@@ -20,8 +20,7 @@ def handle_llm_async(text: str, chat_id, request_id, lang_code: str) -> None:
     send({"type": "llm_suggestions", "requestId": request_id, "suggestions": suggestions})
 
 
-@safe_handler("apply_llm_result",
-              lambda m: {"result": m.get("text", ""), "replacements": {}})
+@safe_handler("apply_llm_result", lambda m: {"result": m.get("text", ""), "replacements": {}})
 def handle_apply_llm(message: dict) -> None:
     """Phase 3: Nutzer hat im Review-Panel entschieden, welche Vorschlaege gelten."""
     text = message.get("text", "")
@@ -32,16 +31,19 @@ def handle_apply_llm(message: dict) -> None:
     replacements = {f.placeholder: f.original for f in findings}
     log.info("LLM-Vorschlaege angewendet: %d von %d", len(findings), len(suggestions))
 
-    send({
-        "type": "apply_llm_result",
-        "requestId": message.get("requestId"),
-        "result": result_text,
-        "replacements": replacements,
-    })
+    send(
+        {
+            "type": "apply_llm_result",
+            "requestId": message.get("requestId"),
+            "result": result_text,
+            "replacements": replacements,
+        }
+    )
 
 
-@safe_handler("retry_rewrite_result",
-              lambda m: {"suggestedReplacement": f"[{m.get('category', '')}]"})
+@safe_handler(
+    "retry_rewrite_result", lambda m: {"suggestedReplacement": f"[{m.get('category', '')}]"}
+)
 def handle_retry_rewrite(message: dict) -> None:
     """'Neu umformulieren' fuer genau ein Finding, mit erhoehter Temperature.
     Laeuft synchron im Haupt-Thread (kurzer, fokussierter Call)."""
@@ -50,8 +52,10 @@ def handle_retry_rewrite(message: dict) -> None:
 
     rewritten = llm_rewrite.rewrite_finding(text, category, temperature=0.7)
 
-    send({
-        "type": "retry_rewrite_result",
-        "requestId": message.get("requestId"),
-        "suggestedReplacement": rewritten,
-    })
+    send(
+        {
+            "type": "retry_rewrite_result",
+            "requestId": message.get("requestId"),
+            "suggestedReplacement": rewritten,
+        }
+    )
