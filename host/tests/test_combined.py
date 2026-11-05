@@ -9,12 +9,14 @@ class FakeDetector:
     def __init__(self, priority=10):
         self.priority = priority
         self.matches, self.extra = [], []
+        self.lang = []
 
     def set(self, matches, extra=()):
         self.matches, self.extra = list(matches), list(extra)
 
-    def find(self, text, chat_id=None):
+    def find(self, text, chat_id=None, lang_code=None):
         # Kopien, weil _collect die priority auf den Matches setzt
+        self.lang.append(lang_code)
         return [Match(m.start, m.end, m.original, m.fake_value, m.category)
                 for m in self.matches], list(self.extra)
 
@@ -213,3 +215,11 @@ def test_original_text_is_not_mutated_between_detectors(pipeline):
     set_presidio([Match(6, 16, "Jonas Wüst", "Max Mustermann", "PERSON")])
     result, _ = combined.detect_and_anonymize("Hallo Jonas Wüst")
     assert result == "Hallo Kunde Wüst"
+
+
+# should fail until
+@pytest.mark.xfail(reason="Schritt 5: lang noch nicht in combined", strict=True, raises=TypeError)
+def test_lang_is_passed_to_detectors(fakes):
+    (det,) = fakes(10)
+    combined.detect_and_anonymize("Hello there", chat_id="c", lang="en")
+    assert det.lang == ["en"]

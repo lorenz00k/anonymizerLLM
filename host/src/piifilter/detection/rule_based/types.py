@@ -31,6 +31,6 @@ class Finding:
 class Detector(Protocol):
     priority: int # hoeher gewinnt bei Ueberschneidung
 
-    def find(self, text: str, chat_id: str) -> tuple[list[Match], list[Finding]]:
+    def find(self, text: str, chat_id: str, language=str) -> tuple[list[Match], list[Finding]]:
         """Matches mit Position + zusaetzliche positionslose Findings."""
         ...
