@@ -1,5 +1,6 @@
 import pytest
 
+from piifilter.detection.rule_based import regex_rules
 from piifilter.languages import DEFAULT_LANG, LANGUAGES, get_language
 from piifilter.languages.detect import detect_language
 
@@ -49,6 +50,10 @@ def test_get_language_falls_back_to_default(lang_code):
 def test_get_language_known(lang_code):
     assert get_language(lang_code).lang_code == lang_code
 
+@pytest.mark.parametrize("lang", LANGUAGES)
+def test_every_language_has_pool_for_each_regex_category(lang):
+    for category in regex_rules.PATTERNS:
+        assert LANGUAGES[lang].fake_pools.get(category), f"{lang}: {category}"
 
 @pytest.mark.parametrize("text,expected", [
     ("Ich wohne seit drei Jahren in Hamburg und arbeite dort als Entwickler.", "de"),
