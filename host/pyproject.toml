@@ -7,6 +7,7 @@ dependencies = [
     "presidio-analyzer",
     "presidio-anonymizer",
     "spacy",
+    "langdetect",
     "fastapi",
     "uvicorn",
     "requests"
