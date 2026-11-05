@@ -17,13 +17,13 @@ PATTERNS = {
     "PHONE": re.compile(r"\b(?:\+\d{1,3}[\s-]?)?\(?\d{2,5}\)?[\s-]?\d{3,4}[\s-]?\d{3,4}\b"),
 }
 
-def find_matches(text: str, lang: str | None = None) -> list[Match]:
+def find_matches(text: str, lang_code: str | None = None) -> list[Match]:
     """
     Durchsucht den Originaltext nach allen Regex-Mustern. Jeder
     EINZIGARTIGE Original-Wert bekommt konsequent denselben Fake-Wert
     innerhalb eines Aufrufs.
     """
-    pools = get_language(lang).fake_pools
+    pools = get_language(lang_code).fake_pools
     matches: list[Match] = []
     assigned: dict[str, str] = {}
     used_counts: dict[str, int] = {}

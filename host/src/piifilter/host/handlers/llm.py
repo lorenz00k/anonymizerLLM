@@ -4,11 +4,11 @@ from piifilter.host.transport import send, safe_handler
 from piifilter.logger import log
 
 
-def handle_llm_async(text: str, chat_id, request_id, lang: str) -> None:
+def handle_llm_async(text: str, chat_id, request_id, lang_code: str) -> None:
     """Phase 2, im Hintergrund-Thread (von handle_anonymize gestartet).
     Keine Fehlerantwort, sondern bei Fehler eine leere Vorschlagsliste."""
     try:
-        # lang wird erst in 'handle_apply_llm' an das LLM weitergereicht
+        # lang_code wird erst in 'handle_apply_llm' an das LLM weitergereicht
         suggestions = get_llm_suggestions(text, chat_id)
     except Exception:
         log.exception("Fehler bei der LLM-Erkennung")

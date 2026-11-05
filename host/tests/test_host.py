@@ -290,7 +290,7 @@ def test_german_text_is_detected_as_german(host):
 
 
 def test_explicit_lang_overrides_detection(host):
-    host.run({"text": EN_TEXT, "chatId": "lang-3", "requestId": 1, "lang": "de"})
+    host.run({"text": EN_TEXT, "chatId": "lang-3", "requestId": 1, "lang_code": "de"})
     (args, _), = host.detect_calls
     assert args[2] == "de"
 

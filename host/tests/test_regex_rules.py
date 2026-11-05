@@ -50,11 +50,11 @@ def test_fake_value_comes_from_pool():
     (m,) = _by_category(find_matches("a@x.de"), "EMAIL")
     assert m.fake_value in get_language("de").fake_pools["EMAIL"]
 
-@pytest.mark.parametrize("lang", LANGUAGES)
-def test_regex_uses_pool_of_language(lang):
+@pytest.mark.parametrize("lang_code", LANGUAGES)
+def test_regex_uses_pool_of_language(lang_code):
     text = "Mail an max@firma.de bitte"
-    (m,) = [x for x in regex_rules.find_matches(text, lang) if x.category == "EMAIL"]
-    assert m.fake_value in LANGUAGES[lang].fake_pools["EMAIL"]
+    (m,) = [x for x in regex_rules.find_matches(text, lang_code) if x.category == "EMAIL"]
+    assert m.fake_value in LANGUAGES[lang_code].fake_pools["EMAIL"]
 
 def test_regex_default_is_german():
     (m,) = [x for x in regex_rules.find_matches("a@b.de") if x.category == "EMAIL"]

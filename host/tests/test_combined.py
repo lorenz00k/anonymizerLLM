@@ -9,14 +9,14 @@ class FakeDetector:
     def __init__(self, priority=10):
         self.priority = priority
         self.matches, self.extra = [], []
-        self.lang = []
+        self.lang_code = []
 
     def set(self, matches, extra=()):
         self.matches, self.extra = list(matches), list(extra)
 
     def find(self, text, chat_id=None, lang_code=None):
         # Kopien, weil _collect die priority auf den Matches setzt
-        self.lang.append(lang_code)
+        self.lang_code.append(lang_code)
         return [Match(m.start, m.end, m.original, m.fake_value, m.category)
                 for m in self.matches], list(self.extra)
 
@@ -218,5 +218,5 @@ def test_original_text_is_not_mutated_between_detectors(pipeline):
 
 def test_lang_is_passed_to_detectors(fakes):
     (det,) = fakes(10)
-    combined.detect_and_anonymize("Hello there", chat_id="c", lang="en")
-    assert det.lang == ["en"]
+    combined.detect_and_anonymize("Hello there", chat_id="c", lang_code="en")
+    assert det.lang_code == ["en"]

@@ -51,7 +51,7 @@ def test_trim_greeting(snippet, trimmed):
 def test_config_values_reach_analyzer(engine):
     fake = engine([])
     for code, lang_conf in LANGUAGES.items():
-        presidio_engine.find_matches("irgendein Text", language=code)
+        presidio_engine.find_matches("irgendein Text", lang_code=code)
         call = fake.calls[-1]
         assert call["language"] == lang_conf.lang_code
         assert call["entities"] == list(lang_conf.presidio_entities)
@@ -61,7 +61,7 @@ def test_config_values_reach_analyzer(engine):
 def test_german_greeting_is_trimmed_and_pool_is_german(engine):
     text = "Hallo Erika Müller wohnt in Berlin."
     engine([_r(text, "Hallo Erika Müller", "PERSON"), _r(text, "Berlin", "LOCATION")])
-    matches, extra = presidio_engine.find_matches(text, language="de")
+    matches, extra = presidio_engine.find_matches(text, lang_code="de")
     person, loc = matches
     assert person.original == "Erika Müller"
     assert text[person.start:person.end] == "Erika Müller"
@@ -73,7 +73,7 @@ def test_german_greeting_is_trimmed_and_pool_is_german(engine):
 def test_english_uses_english_pool_and_greeting(engine):
     text = "Dear John Smith lives in London."
     engine([_r(text, "Dear John Smith", "PERSON"), _r(text, "London", "LOCATION")])
-    matches, _ = presidio_engine.find_matches(text, language="en")
+    matches, _ = presidio_engine.find_matches(text, lang_code="en")
     assert matches[0].original == "John Smith"
     assert matches[0].fake_value == LANGUAGES["en"].fake_pools["PERSON"][0]
     assert matches[1].fake_value == LANGUAGES["en"].fake_pools["LOCATION"][0]
@@ -83,32 +83,32 @@ def test_same_original_gets_same_fake(engine):
     text = "Anna und Anna"
     engine([_r(text, "Anna", "PERSON"),
             SimpleNamespace(start=9, end=13, entity_type="PERSON", score=0.9)])
-    matches, _ = presidio_engine.find_matches(text, language="de")
+    matches, _ = presidio_engine.find_matches(text, lang_code="de")
     assert matches[0].fake_value == matches[1].fake_value
 
 
 def test_different_originals_get_different_fakes(engine):
     text = "Anna und Bert"
     engine([_r(text, "Anna", "PERSON"), _r(text, "Bert", "PERSON")])
-    matches, _ = presidio_engine.find_matches(text, language="de")
+    matches, _ = presidio_engine.find_matches(text, lang_code="de")
     assert matches[0].fake_value != matches[1].fake_value
 
 
 def test_unknown_category_falls_back_to_placeholder(engine):
     text = "Quelle: Foo"
     engine([_r(text, "Foo", "ORGANIZATION")])
-    (m,), _ = presidio_engine.find_matches(text, language="de")
+    (m,), _ = presidio_engine.find_matches(text, lang_code="de")
     assert m.fake_value == "[REDACTED_ORGANIZATION]"
 
 
 def test_whitespace_only_span_is_skipped(engine):
     engine([SimpleNamespace(start=0, end=2, entity_type="PERSON", score=0.9)])
-    assert presidio_engine.find_matches("  x", language="de") == ([], [])
+    assert presidio_engine.find_matches("  x", lang_code="de") == ([], [])
 
 
-def test_unknown_language_uses_german(engine):
+def test_unknown_lang_code_uses_german(engine):
     fake = engine([])
-    presidio_engine.find_matches("Text", language="fr")
+    presidio_engine.find_matches("Text", lang_code="fr")
     assert fake.calls[-1]["language"] == "de"
 
 
@@ -121,7 +121,7 @@ def test_default_lang_is_german(engine):
 # ---------- echte Modelle ----------
 
 CASES = [
-    # (lang, text, erwarteter Originaltext, Kategorie)
+    # (lang_code, text, erwarteter Originaltext, Kategorie)
     ("de", "Sehr geehrte Frau Merz, danke für die Nachricht.", "Merz", "PERSON"),
     ("de", "Hallo Erika, wie geht es dir?", "Erika", "PERSON"),
     ("de", "Ich wohne seit Jahren in Hamburg.", "Hamburg", "LOCATION"),
@@ -131,25 +131,25 @@ CASES = [
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("lang,text,original,category", CASES)
-def test_real_model_finds_entities(lang, text, original, category):
-    matches, _ = presidio_engine.find_matches(text, language=lang)
+@pytest.mark.parametrize("lang_code,text,original,category", CASES)
+def test_real_model_finds_entities(lang_code, text, original, category):
+    matches, _ = presidio_engine.find_matches(text, lang_code=lang_code)
     assert any(original in m.original and m.category == category for m in matches), matches
 
 
 @pytest.mark.slow
 def test_real_model_trims_greeting():
-    matches, _ = presidio_engine.find_matches("Hallo Erika, wie geht es dir?", language="de")
+    matches, _ = presidio_engine.find_matches("Hallo Erika, wie geht es dir?", lang_code="de")
     assert all(not m.original.lower().startswith("hallo") for m in matches)
 
 
 @pytest.mark.slow
 def test_english_text_with_german_model_does_not_crash():
-    presidio_engine.find_matches("I live in London.", language="de")
+    presidio_engine.find_matches("I live in London.", lang_code="de")
 
 
 @pytest.mark.slow
 def test_only_requested_model_is_built():
     presidio_engine._build_analyzer.cache_clear()
-    presidio_engine.find_matches("Ich wohne in Hamburg.", language="de")
+    presidio_engine.find_matches("Ich wohne in Hamburg.", lang_code="de")
     assert presidio_engine._build_analyzer.cache_info().currsize == 1

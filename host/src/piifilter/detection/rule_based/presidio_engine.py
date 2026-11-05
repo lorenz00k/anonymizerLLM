@@ -31,8 +31,8 @@ def get_analyzer(lang_code: str) -> AnalyzerEngine:
     with _build_lock:
         return _build_analyzer(lang_code)
 
-def warmup(lang: str = "de") -> None:
-    get_analyzer(lang)
+def warmup(lang_code: str = "de") -> None:
+    get_analyzer(lang_code)
 
 def _trim_greeting(text: str, start: int, end: int, greeting_words: frozenset[str]) -> tuple[int, int]:
     """Schneidet ein vorangestelltes Gruss-/Anredewort ab, das das NER-Modell
@@ -45,7 +45,7 @@ def _trim_greeting(text: str, start: int, end: int, greeting_words: frozenset[st
     return start, end
 
 
-def find_matches(text: str, language: str = "de") -> tuple[list[Match], list[Finding]]:
+def find_matches(text: str, lang_code: str = "de") -> tuple[list[Match], list[Finding]]:
     """
     Durchsucht den Originaltext nach PERSON/LOCATION-Entitaeten.
     Gibt zwei Listen zurueck:
@@ -55,7 +55,7 @@ def find_matches(text: str, language: str = "de") -> tuple[list[Match], list[Fin
       (Vor-/Nachname einzeln), damit Teilerwaehnungen in Claudes
       Antwort spaeter trotzdem deanonymisiert werden koennen.
     """
-    lang_config = get_language(language)
+    lang_config = get_language(lang_code)
     analyzer = get_analyzer(lang_config.lang_code)
 
     results = analyzer.analyze(

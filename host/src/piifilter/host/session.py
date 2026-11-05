@@ -10,9 +10,9 @@ class ChatLanguages:
 
     def resolve(self, chat_id, text: str, override: str | None = None) -> str:
         default = self._by_chat.get(chat_id, DEFAULT_LANG)
-        lang = override or detect_language(text, default=default)
-        self._by_chat[chat_id] = lang
-        return lang
+        lang_code = override or detect_language(text, default=default)
+        self._by_chat[chat_id] = lang_code
+        return lang_code
 
     def get(self, chat_id) -> str:
         return self._by_chat.get(chat_id, DEFAULT_LANG)

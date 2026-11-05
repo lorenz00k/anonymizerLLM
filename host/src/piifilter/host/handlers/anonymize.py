@@ -15,11 +15,11 @@ def handle_anonymize(message: dict) -> None:
     chat_id = message.get("chatId")
     request_id = message.get("requestId")
     llm_enabled = message.get("llmEnabled", False)
-    lang = chat_languages.resolve(chat_id, text, message.get("lang"))
+    lang_code = chat_languages.resolve(chat_id, text, message.get("lang_code"))
     log.debug("Nachricht empfangen (%d Zeichen), Chat-ID: %s, LLM aktiv: %s, Sprache: %s",
-              len(text), chat_id, llm_enabled, lang)
+              len(text), chat_id, llm_enabled, lang_code)
 
-    result_text, findings = detect_and_anonymize(text, chat_id, lang)
+    result_text, findings = detect_and_anonymize(text, chat_id, lang_code)
 
     replacements = {f.placeholder: f.original for f in findings}
     log.trace("Ersetzungen (Klartext): %s", replacements)
@@ -35,7 +35,7 @@ def handle_anonymize(message: dict) -> None:
     if llm_enabled:
         threading.Thread(
             target=handle_llm_async,
-            args=(result_text, chat_id, request_id, lang),
+            args=(result_text, chat_id, request_id, lang_code),
             daemon=True,
         ).start()
     else:

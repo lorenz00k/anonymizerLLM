@@ -8,33 +8,33 @@ from piifilter.languages.detect import detect_language
 NOT_PRESIDIO = {"EMAIL", "IBAN", "PHONE"}
 
 
-@pytest.mark.parametrize("lang", LANGUAGES)
+@pytest.mark.parametrize("lang_code", LANGUAGES)
 class TestEveryLanguageConfig:
-    def test_basic_fields(self, lang):
-        lang_conf = LANGUAGES[lang]
-        assert lang_conf.lang_code == lang
+    def test_basic_fields(self, lang_code):
+        lang_conf = LANGUAGES[lang_code]
+        assert lang_conf.lang_code == lang_code
         assert lang_conf.spacy_model
 
-    def test_presidio_entities_have_fake_pools(self, lang):
-        lang_conf = LANGUAGES[lang]
+    def test_presidio_entities_have_fake_pools(self, lang_code):
+        lang_conf = LANGUAGES[lang_code]
         for entity in lang_conf.presidio_entities:
-            assert lang_conf.fake_pools.get(entity), f"{lang}: kein Pool fuer {entity}"
+            assert lang_conf.fake_pools.get(entity), f"{lang_code}: kein Pool fuer {entity}"
 
-    def test_presidio_entities_are_real_presidio_names(self, lang):
-        lang_conf = LANGUAGES[lang]
+    def test_presidio_entities_are_real_presidio_names(self, lang_code):
+        lang_conf = LANGUAGES[lang_code]
         assert not NOT_PRESIDIO & set(lang_conf.presidio_entities)
 
-    def test_greeting_words_are_lowercase(self, lang):
+    def test_greeting_words_are_lowercase(self, lang_code):
         # _trim_greeting vergleicht mit .lower()
-        for w in LANGUAGES[lang].presidio_greeting_words:
+        for w in LANGUAGES[lang_code].presidio_greeting_words:
             assert w == w.lower()
 
-    def test_pools_have_no_duplicates(self, lang):
-        for category, pool in LANGUAGES[lang].fake_pools.items():
-            assert len(pool) == len(set(pool)), f"{lang}/{category}"
+    def test_pools_have_no_duplicates(self, lang_code):
+        for category, pool in LANGUAGES[lang_code].fake_pools.items():
+            assert len(pool) == len(set(pool)), f"{lang_code}/{category}"
 
-    def test_threshold_in_range(self, lang):
-        assert 0.0 <= LANGUAGES[lang].score_threshold <= 1.0
+    def test_threshold_in_range(self, lang_code):
+        assert 0.0 <= LANGUAGES[lang_code].score_threshold <= 1.0
 
 
 def test_german_pool_has_no_english_default_name():
@@ -50,10 +50,10 @@ def test_get_language_falls_back_to_default(lang_code):
 def test_get_language_known(lang_code):
     assert get_language(lang_code).lang_code == lang_code
 
-@pytest.mark.parametrize("lang", LANGUAGES)
-def test_every_language_has_pool_for_each_regex_category(lang):
+@pytest.mark.parametrize("lang_code", LANGUAGES)
+def test_every_language_has_pool_for_each_regex_category(lang_code):
     for category in regex_rules.PATTERNS:
-        assert LANGUAGES[lang].fake_pools.get(category), f"{lang}: {category}"
+        assert LANGUAGES[lang_code].fake_pools.get(category), f"{lang_code}: {category}"
 
 @pytest.mark.parametrize("text,expected", [
     ("Ich wohne seit drei Jahren in Hamburg und arbeite dort als Entwickler.", "de"),
