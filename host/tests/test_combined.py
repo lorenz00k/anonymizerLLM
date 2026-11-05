@@ -216,9 +216,6 @@ def test_original_text_is_not_mutated_between_detectors(pipeline):
     result, _ = combined.detect_and_anonymize("Hallo Jonas Wüst")
     assert result == "Hallo Kunde Wüst"
 
-
-# should fail until
-@pytest.mark.xfail(reason="Schritt 5: lang noch nicht in combined", strict=True, raises=TypeError)
 def test_lang_is_passed_to_detectors(fakes):
     (det,) = fakes(10)
     combined.detect_and_anonymize("Hello there", chat_id="c", lang="en")

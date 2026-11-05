@@ -21,11 +21,11 @@ from piifilter.detection.rule_based.types import Finding, Match
 
 DETECTORS = [CustomRulesDetector(), RegexDetector(), PresidioDetector()]
 
-def _collect(text: str, chat_id: str | None) -> tuple[list[Match], list[Finding]]:
+def _collect(text: str, chat_id: str | None, lang:str | None) -> tuple[list[Match], list[Finding]]:
     matches: list[Match] = []
     extra: list[Finding] = []
     for d in DETECTORS:
-        found, extra_findings = d.find(text, chat_id)
+        found, extra_findings = d.find(text, chat_id, lang)
         for m in found:
             m.priority = d.priority
         matches += found
@@ -33,8 +33,8 @@ def _collect(text: str, chat_id: str | None) -> tuple[list[Match], list[Finding]
     return matches, extra
 
 
-def detect_and_anonymize(text: str, chat_id: str = None) -> tuple[str, list[Finding]]:
-    matches, extra = _collect(text, chat_id)
+def detect_and_anonymize(text: str, chat_id: str | None = None, lang: str | None = None) -> tuple[str, list[Finding]]:
+    matches, extra = _collect(text, chat_id, lang)
 
     accepted = resolve_overlaps(matches)
     accepted = propagate_matches(text, accepted)
