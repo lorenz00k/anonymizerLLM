@@ -9,6 +9,7 @@ gemeldet haben.
 import re
 
 from piifilter.detection.rule_based.types import Match
+from piifilter.languages import get_language
 
 PATTERNS = {
     "EMAIL": re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"),
@@ -16,33 +17,20 @@ PATTERNS = {
     "PHONE": re.compile(r"\b(?:\+\d{1,3}[\s-]?)?\(?\d{2,5}\)?[\s-]?\d{3,4}[\s-]?\d{3,4}\b"),
 }
 
-FAKE_EMAILS = ["maxmustermann@example.com", "erika.musterfrau@example.com", "john.doe@example.com"]
-FAKE_IBANS = ["DE00000000000000000000", "DE11111111111111111111"]
-FAKE_PHONES = ["+49 30 1234567", "+49 89 7654321"]
-FAKE_NAMES = ["Max Mustermann", "Erika Musterfrau", "John Doe", "Anna Schmidt"]
-FAKE_LOCATIONS = ["Musterstadt", "Beispielhausen", "Testdorf"]
 
-FAKE_POOLS = {
-    "EMAIL": FAKE_EMAILS,
-    "IBAN": FAKE_IBANS,
-    "PHONE": FAKE_PHONES,
-    "PERSON": FAKE_NAMES,
-    "LOCATION": FAKE_LOCATIONS,
-}
-
-
-def find_matches(text: str) -> list[Match]:
+def find_matches(text: str, lang_code: str | None = None) -> list[Match]:
     """
     Durchsucht den Originaltext nach allen Regex-Mustern. Jeder
     EINZIGARTIGE Original-Wert bekommt konsequent denselben Fake-Wert
     innerhalb eines Aufrufs.
     """
+    pools = get_language(lang_code).fake_pools
     matches: list[Match] = []
     assigned: dict[str, str] = {}
     used_counts: dict[str, int] = {}
 
     for category, pattern in PATTERNS.items():
-        pool = FAKE_POOLS[category]
+        pool = pools[category]
         for m in pattern.finditer(text):
             original = m.group(0)
 

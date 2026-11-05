@@ -5,43 +5,58 @@ ordnet ihnen einen Fake-Wert zu. Ersetzt selbst nichts im Text -
 das uebernimmt combined.py zentral.
 """
 
-from presidio_analyzer import AnalyzerEngine
+import threading
+from functools import lru_cache
+
+from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 
-from piifilter.detection.rule_based.regex_rules import FAKE_POOLS
 from piifilter.detection.rule_based.types import Match, Finding
+from piifilter.languages import get_language
 
-NLP_CONFIGURATION = {
-    "nlp_engine_name": "spacy",
-    "models": [{"lang_code": "de", "model_name": "de_core_news_lg"}],
-}
-
-provider = NlpEngineProvider(nlp_configuration=NLP_CONFIGURATION)
-nlp_engine = provider.create_engine()
-
-analyzer = AnalyzerEngine(nlp_engine=nlp_engine, supported_languages=["de"])
-
-ENTITIES = ["PERSON", "LOCATION"]
-
-GREETING_WORDS = {"hallo", "hi", "hey", "liebe", "lieber", "sehr", "guten", "moin"}
+_build_lock = threading.Lock()
 
 
-def _trim_greeting(text: str, start: int, end: int) -> tuple[int, int]:
-    """
-    Presidio erkennt manchmal ein vorangestelltes Gruss-/Anredewort
-    faelschlich als Teil einer PERSON-Entitaet (z.B. "Hallo Erika" statt
-    nur "Erika"). Schneidet ein bekanntes Gruss-Wort vom Anfang der
-    erkannten Spanne ab, falls vorhanden.
-    """
+@lru_cache(maxsize=None)
+def _build_analyzer(lang_code: str) -> AnalyzerEngine:
+    lang_config = get_language(lang_code)
+    nlp = NlpEngineProvider(
+        nlp_configuration={
+            "nlp_engine_name": "spacy",
+            "models": [{"lang_code": lang_config.lang_code, "model_name": lang_config.spacy_model}],
+        }
+    ).create_engine()
+    registry = RecognizerRegistry(supported_languages=[lang_config.lang_code])
+    registry.load_predefined_recognizers(nlp_engine=nlp, languages=[lang_config.lang_code])
+    return AnalyzerEngine(
+        nlp_engine=nlp, registry=registry, supported_languages=[lang_config.lang_code]
+    )
+
+
+def get_analyzer(lang_code: str) -> AnalyzerEngine:
+    # Lock: Warmup-Thread und erste Nachricht sollen nicht beide laden
+    with _build_lock:
+        return _build_analyzer(lang_code)
+
+
+def warmup(lang_code: str = "de") -> None:
+    get_analyzer(lang_code)
+
+
+def _trim_greeting(
+    text: str, start: int, end: int, greeting_words: frozenset[str]
+) -> tuple[int, int]:
+    """Schneidet ein vorangestelltes Gruss-/Anredewort ab, das das NER-Modell
+    faelschlich zur PERSON-Entitaet gezaehlt hat ("Hallo Erika" -> "Erika")."""
     snippet = text[start:end]
     words = snippet.split()
-    if len(words) > 1 and words[0].lower().rstrip(",") in GREETING_WORDS:
+    if len(words) > 1 and words[0].lower().rstrip(",") in greeting_words:
         offset = len(words[0]) + 1  # Wort + folgendes Leerzeichen
         return start + offset, end
     return start, end
 
 
-def find_matches(text: str, language: str = "de") -> tuple[list[Match], list[Finding]]:
+def find_matches(text: str, lang_code: str = "de") -> tuple[list[Match], list[Finding]]:
     """
     Durchsucht den Originaltext nach PERSON/LOCATION-Entitaeten.
     Gibt zwei Listen zurueck:
@@ -51,7 +66,15 @@ def find_matches(text: str, language: str = "de") -> tuple[list[Match], list[Fin
       (Vor-/Nachname einzeln), damit Teilerwaehnungen in Claudes
       Antwort spaeter trotzdem deanonymisiert werden koennen.
     """
-    results = analyzer.analyze(text=text, entities=ENTITIES, language=language)
+    lang_config = get_language(lang_code)
+    analyzer = get_analyzer(lang_config.lang_code)
+
+    results = analyzer.analyze(
+        text=text,
+        entities=list(lang_config.presidio_entities),
+        language=lang_config.lang_code,
+        score_threshold=lang_config.score_threshold,
+    )
 
     matches: list[Match] = []
     extra_findings: list[Finding] = []
@@ -61,7 +84,7 @@ def find_matches(text: str, language: str = "de") -> tuple[list[Match], list[Fin
     for r in results:
         start, end = r.start, r.end
         if r.entity_type == "PERSON":
-            start, end = _trim_greeting(text, start, end)
+            start, end = _trim_greeting(text, start, end, lang_config.presidio_greeting_words)
 
         original = text[start:end]
         if not original.strip():
@@ -71,9 +94,9 @@ def find_matches(text: str, language: str = "de") -> tuple[list[Match], list[Fin
         if original in assigned:
             fake_value = assigned[original]
         else:
-            pool = FAKE_POOLS.get(category, [f"[REDACTED_{category}]"])
+            pool = lang_config.fake_pools.get(category, [f"[REDACTED_{category}]"])
             count = used_counts.get(category, 0)
-            fake_value = pool[count % len(pool)] if isinstance(pool, list) else pool
+            fake_value = pool[count % len(pool)]
             used_counts[category] = count + 1
             assigned[original] = fake_value
 
