@@ -6,6 +6,7 @@ chrome.runtime.connectNative() aufruft.
 
 import threading
 
+from piifilter.detection.rule_based import presidio_engine
 from piifilter.logger import log
 from piifilter.native_messaging import read_message
 from piifilter.detection.llm import ollama_client
@@ -27,6 +28,7 @@ def main() -> None:
     # Modelle im Hintergrund vorladen, damit die erste echte Nachricht
     # nicht den Cold-Start zahlt. Blockiert den Host-Start nicht.
     threading.Thread(target=ollama_client.warmup, daemon=True).start()
+    threading.Thread(target=presidio_engine.warmup, daemon=True).start()
 
     while (message := _read_next()) is not None:
         dispatch(message)

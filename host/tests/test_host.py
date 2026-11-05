@@ -5,6 +5,7 @@ import time
 import pytest
 
 from piifilter.detection.llm import ollama_client, llm_rewrite
+from piifilter.detection.rule_based import presidio_engine
 from piifilter.detection.rule_based.types import Finding
 
 entry = importlib.import_module("piifilter.__main__")
@@ -67,6 +68,7 @@ def host(monkeypatch):
     monkeypatch.setattr(llm_mod, "apply_llm_suggestions", apply)
     monkeypatch.setattr(llm_rewrite, "rewrite_finding", rewrite)
     monkeypatch.setattr(ollama_client, "warmup", lambda: None)
+    monkeypatch.setattr(presidio_engine, "warmup", lambda *a, **k: None, raising=False)
 
     def run(*messages):
         it = iter(messages)
@@ -264,3 +266,42 @@ def test_sends_never_overlap(host, monkeypatch):
     [t.start() for t in threads]
     [t.join() for t in threads]
     assert overlaps == []
+
+@pytest.fixture(autouse=True)
+def _reset_languages():
+    from piifilter.host.session import chat_languages
+    chat_languages._by_chat.clear()
+
+
+EN_TEXT = "I have been living in London for three years now and I really like it."
+DE_TEXT = "Ich wohne seit drei Jahren in Hamburg und fuehle mich dort sehr wohl."
+
+
+def test_detected_language_reaches_detection(host):
+    host.run({"text": EN_TEXT, "chatId": "lang-1", "requestId": 1})
+    (args, _), = host.detect_calls
+    assert args[2] == "en"
+
+
+def test_german_text_is_detected_as_german(host):
+    host.run({"text": DE_TEXT, "chatId": "lang-2", "requestId": 1})
+    (args, _), = host.detect_calls
+    assert args[2] == "de"
+
+
+def test_explicit_lang_overrides_detection(host):
+    host.run({"text": EN_TEXT, "chatId": "lang-3", "requestId": 1, "lang": "de"})
+    (args, _), = host.detect_calls
+    assert args[2] == "de"
+
+
+def test_short_message_keeps_chat_language(host):
+    host.run({"text": EN_TEXT, "chatId": "lang-4", "requestId": 1},
+             {"text": "ok", "chatId": "lang-4", "requestId": 2})
+    assert [a[2] for a, _ in host.detect_calls] == ["en", "en"]
+
+
+def test_languages_are_tracked_per_chat(host):
+    host.run({"text": EN_TEXT, "chatId": "lang-5", "requestId": 1},
+             {"text": "ok", "chatId": "lang-6", "requestId": 2})
+    assert [a[2] for a, _ in host.detect_calls] == ["en", "de"]

@@ -2,6 +2,7 @@ import threading
 
 from piifilter.detection.rule_based.combined import detect_and_anonymize
 from piifilter.host.handlers.llm import handle_llm_async
+from piifilter.host.session import chat_languages
 from piifilter.host.transport import safe_handler, send
 from piifilter.logger import log
 
@@ -14,10 +15,11 @@ def handle_anonymize(message: dict) -> None:
     chat_id = message.get("chatId")
     request_id = message.get("requestId")
     llm_enabled = message.get("llmEnabled", False)
-    log.debug("Nachricht empfangen (%d Zeichen), Chat-ID: %s, LLM aktiv: %s",
-              len(text), chat_id, llm_enabled)
+    lang = chat_languages.resolve(chat_id, text, message.get("lang"))
+    log.debug("Nachricht empfangen (%d Zeichen), Chat-ID: %s, LLM aktiv: %s, Sprache: %s",
+              len(text), chat_id, llm_enabled, lang)
 
-    result_text, findings = detect_and_anonymize(text, chat_id)
+    result_text, findings = detect_and_anonymize(text, chat_id, lang)
 
     replacements = {f.placeholder: f.original for f in findings}
     log.trace("Ersetzungen (Klartext): %s", replacements)
@@ -33,7 +35,7 @@ def handle_anonymize(message: dict) -> None:
     if llm_enabled:
         threading.Thread(
             target=handle_llm_async,
-            args=(result_text, chat_id, request_id),
+            args=(result_text, chat_id, request_id, lang),
             daemon=True,
         ).start()
     else:

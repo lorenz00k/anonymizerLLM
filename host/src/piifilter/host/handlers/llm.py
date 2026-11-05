@@ -4,7 +4,7 @@ from piifilter.host.transport import send, safe_handler
 from piifilter.logger import log
 
 
-def handle_llm_async(text: str, chat_id, request_id) -> None:
+def handle_llm_async(text: str, chat_id, request_id, lang: str) -> None:
     """Phase 2, im Hintergrund-Thread (von handle_anonymize gestartet).
     Keine Fehlerantwort, sondern bei Fehler eine leere Vorschlagsliste."""
     try:
