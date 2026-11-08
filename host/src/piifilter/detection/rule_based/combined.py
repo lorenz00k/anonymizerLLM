@@ -20,8 +20,10 @@ from piifilter.detection.rule_based.detectors import (
     RegexDetector,
     PresidioDetector,
 )
+from piifilter.detection.rule_based.fakes import FakeAssigner
 from piifilter.detection.rule_based.postprocess import propagate_matches, resolve_overlaps
 from piifilter.detection.rule_based.types import Finding, Match
+from piifilter.languages import get_language
 
 DETECTORS = [CustomRulesDetector(), RegexDetector(), PresidioDetector()]
 
@@ -31,8 +33,9 @@ def _collect(
 ) -> tuple[list[Match], list[Finding]]:
     matches: list[Match] = []
     extra: list[Finding] = []
+    assigner = FakeAssigner(get_language(lang_code))
     for d in DETECTORS:
-        found, extra_findings = d.find(text, chat_id, lang_code)
+        found, extra_findings = d.find(text, assigner, chat_id, lang_code)
         for m in found:
             m.priority = d.priority
         matches += found

@@ -5,7 +5,7 @@ from piifilter.detection.rule_based.types import Match
 import re
 
 
-def find_custom_matches(text: str, chat_id: str = None) -> list[Match]:
+def find_custom_matches(text: str, chat_id: str | None = None) -> list[Match]:
     rules = get_effective_rules(chat_id)
     matches: list[Match] = []
     for original, fake_value in rules.items():
