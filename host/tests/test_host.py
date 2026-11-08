@@ -77,6 +77,10 @@ def host(monkeypatch):
         entry.main()
 
     h.run = run
+    yield h
+    for t in threading.enumerate():
+        if t is not threading.main_thread() and t.daemon:
+            t.join(timeout=3)
     return h
 
 
