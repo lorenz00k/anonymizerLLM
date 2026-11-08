@@ -2,7 +2,9 @@ import pytest
 
 from piifilter.detection.rule_based import combined, custom_rules
 from piifilter.detection.rule_based.detectors import CustomRulesDetector, RegexDetector
+from piifilter.detection.rule_based.fakes import FakeAssigner
 from piifilter.detection.rule_based.types import Match, Finding
+from piifilter.languages import get_language
 
 
 class FakeDetector:
@@ -10,16 +12,36 @@ class FakeDetector:
         self.priority = priority
         self.matches, self.extra = [], []
         self.lang_code = []
+        self.assigners = []
 
     def set(self, matches, extra=()):
         self.matches, self.extra = list(matches), list(extra)
 
-    def find(self, text, chat_id=None, lang_code=None):
+    def find(self, text, assigner, chat_id=None, lang_code=None):
         # Kopien, weil _collect die priority auf den Matches setzt
         self.lang_code.append(lang_code)
+        self.assigners.append(assigner)
         return [
             Match(m.start, m.end, m.original, m.fake_value, m.category) for m in self.matches
         ], list(self.extra)
+
+
+class AssigningDetector:
+    """Fragt den Assigner wie ein echter Detektor, ohne spaCy."""
+
+    def __init__(self, priority, category, originals):
+        self.priority, self.category, self.originals = priority, category, originals
+        self.assigners = []
+
+    def find(self, text, assigner=None, chat_id=None, lang_code=None):
+        self.assigners.append(assigner)
+        matches = []
+        for o in self.originals:
+            start = text.index(o)
+            matches.append(
+                Match(start, start + len(o), o, assigner.get(self.category, o), self.category)
+            )
+        return matches, []
 
 
 @pytest.fixture
@@ -236,3 +258,99 @@ def test_lang_is_passed_to_detectors(fakes):
     (det,) = fakes(10)
     combined.detect_and_anonymize("Hello there", chat_id="c", lang_code="en")
     assert det.lang_code == ["en"]
+
+
+# ----------  Sprache ----------
+
+
+def test_lang_defaults_to_none_when_not_given(fakes):
+    (det,) = fakes(10)
+    combined.detect_and_anonymize("Hallo")
+    assert det.lang_code == [None]
+
+
+def test_lang_reaches_every_detector(fakes):
+    a, b = fakes(10, 20)
+    combined.detect_and_anonymize("Hello", lang_code="en")
+    assert a.lang_code == ["en"] and b.lang_code == ["en"]
+
+
+def test_chat_id_is_passed_to_every_detector_call(fakes, monkeypatch):
+    seen = []
+    (det,) = fakes(10)
+    original = det.find
+    det.find = lambda text, assigner=None, chat_id=None, lang_code=None: (
+        seen.append(chat_id) or original(text, assigner, chat_id, lang_code)
+    )
+    combined.detect_and_anonymize("x", chat_id="c-1")
+    assert seen == ["c-1"]
+
+
+# ----------  gemeinsamer Assigner ----------
+
+
+def test_every_detector_receives_an_assigner(fakes):
+    a, b = fakes(10, 20)
+    combined.detect_and_anonymize("x")
+    assert isinstance(a.assigners[0], FakeAssigner)
+    assert isinstance(b.assigners[0], FakeAssigner)
+
+
+def test_all_detectors_get_the_same_assigner(monkeypatch):
+    d1 = AssigningDetector(10, "PERSON", ["Anna"])
+    d2 = AssigningDetector(20, "PERSON", ["Bert"])
+    monkeypatch.setattr(combined, "DETECTORS", [d1, d2])
+    combined.detect_and_anonymize("Anna und Bert")
+    assert d1.assigners[0] is d2.assigners[0]
+
+
+def test_two_detectors_same_category_do_not_collide(monkeypatch):
+    d1 = AssigningDetector(10, "PERSON", ["Anna"])
+    d2 = AssigningDetector(20, "PERSON", ["Bert"])
+    monkeypatch.setattr(combined, "DETECTORS", [d1, d2])
+    _, findings = combined.detect_and_anonymize("Anna und Bert")
+    assert len({f.placeholder for f in findings}) == 2
+
+
+def test_new_assigner_per_request(monkeypatch):
+    d = AssigningDetector(10, "PERSON", ["Anna"])
+    monkeypatch.setattr(combined, "DETECTORS", [d])
+    r1, _ = combined.detect_and_anonymize("Anna")
+    r2, _ = combined.detect_and_anonymize("Anna")
+    assert r1 == r2  # kein Zustand zwischen Anfragen
+    assert d.assigners[0] is not d.assigners[1]
+
+
+def test_assigner_uses_pool_of_requested_language(monkeypatch):
+    d = AssigningDetector(10, "PERSON", ["Anna"])
+    monkeypatch.setattr(combined, "DETECTORS", [d])
+    result, _ = combined.detect_and_anonymize("Anna", lang_code="en")
+    assert result == get_language("en").fake_pools["PERSON"][0]
+
+
+def test_unknown_lang_falls_back_to_german_pool(monkeypatch):
+    d = AssigningDetector(10, "PERSON", ["Anna"])
+    monkeypatch.setattr(combined, "DETECTORS", [d])
+    result, _ = combined.detect_and_anonymize("Anna", lang_code="fr")
+    assert result == get_language("de").fake_pools["PERSON"][0]
+
+
+def test_many_emails_get_unique_placeholders(pipeline):
+    combined, _, _ = pipeline
+    text = " ".join(f"u{i}@x.de" for i in range(8))
+    _, findings = combined.detect_and_anonymize(text)
+    assert len({f.placeholder for f in findings}) == 8
+
+
+def test_regex_and_presidio_fakes_do_not_collide(pipeline):
+    combined, set_presidio, _ = pipeline
+    set_presidio([Match(0, 4, "Anna", "Max Mustermann", "PERSON")])
+    result, findings = combined.detect_and_anonymize("Anna mailt a@x.de")
+    assert len({f.placeholder for f in findings}) == len(findings) == 2
+
+
+def test_custom_rule_ignores_assigner(pipeline):
+    combined, _, set_rules = pipeline
+    set_rules({"phoenix": "projekt x"})
+    result, _ = combined.detect_and_anonymize("phoenix")
+    assert result == "projekt x"

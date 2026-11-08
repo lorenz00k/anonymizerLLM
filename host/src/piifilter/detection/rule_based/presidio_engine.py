@@ -56,7 +56,7 @@ def _trim_greeting(
     return start, end
 
 
-def find_matches(text: str, lang_code: str = "de") -> tuple[list[Match], list[Finding]]:
+def find_matches(text: str, assigner, lang_code: str = "de") -> tuple[list[Match], list[Finding]]:
     """
     Durchsucht den Originaltext nach PERSON/LOCATION-Entitaeten.
     Gibt zwei Listen zurueck:
@@ -78,8 +78,7 @@ def find_matches(text: str, lang_code: str = "de") -> tuple[list[Match], list[Fi
 
     matches: list[Match] = []
     extra_findings: list[Finding] = []
-    assigned: dict[str, str] = {}
-    used_counts: dict[str, int] = {}
+    seen: set[str] = set()  # used for extra_findings
 
     for r in results:
         start, end = r.start, r.end
@@ -90,22 +89,15 @@ def find_matches(text: str, lang_code: str = "de") -> tuple[list[Match], list[Fi
         if not original.strip():
             continue
         category = r.entity_type
+        fake_value = assigner.get(category, original)
 
-        if original in assigned:
-            fake_value = assigned[original]
-        else:
-            pool = lang_config.fake_pools.get(category, [f"[REDACTED_{category}]"])
-            count = used_counts.get(category, 0)
-            fake_value = pool[count % len(pool)]
-            used_counts[category] = count + 1
-            assigned[original] = fake_value
-
-            if category == "PERSON":
-                original_parts = original.split()
-                fake_parts = fake_value.split()
-                if len(original_parts) >= 2 and len(fake_parts) >= 2:
-                    extra_findings.append(Finding(fake_parts[0], original_parts[0], category))
-                    extra_findings.append(Finding(fake_parts[-1], original_parts[-1], category))
+        if category == "PERSON" and original not in seen:
+            seen.add(original)
+            original_parts = original.split()
+            fake_parts = fake_value.split()
+            if len(original_parts) >= 2 and len(fake_parts) >= 2:
+                extra_findings.append(Finding(fake_parts[0], original_parts[0], category))
+                extra_findings.append(Finding(fake_parts[-1], original_parts[-1], category))
 
         matches.append(Match(start, end, original, fake_value, category))
 
